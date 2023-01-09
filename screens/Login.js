@@ -35,8 +35,6 @@ WebBrowser.maybeCompleteAuthSession();
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [accessToken, setAccessToken] = useState("");
-  const [googleUserExists, setGoogleUserExists] = useState(false);
 
   const [googleRequest, googleResponse, googlePromptLogin] =
     Google.useAuthRequest(
@@ -52,11 +50,10 @@ const Login = ({ navigation }) => {
     );
   const [fbRequest, fbResponse, facebookPromptLogin] = Facebook.useAuthRequest(
     {
-      // androidClientId:
-      //   "519775217935-rsgo9iqk031d8c0vt0o74p9pmsukgtam.apps.googleusercontent.com",
-      //   expoClientId:"5778013452311829",
-      //   redirectUri: "https://auth.expo.io/@jawher94/chAttach",
       clientId: "5778013452311829",
+      androidClientId: "5778013452311829",
+      expoClientId: "5778013452311829",
+      redirectUri: "https://auth.expo.io/@jawher94/chAttach",
     },
     { useProxy: true }
   );
@@ -91,11 +88,6 @@ const Login = ({ navigation }) => {
       .catch((err) => alert(err));
   };
 
-  // const googleLogin = () => {
-  //   signInWithPopup(auth, provider);
-  //   // getRedirectResult(auth).then((res) => console.log(res.user));
-  // };
-
   const uploadImage = async (image) => {
     const data = new FormData();
     data.append("file", image);
@@ -115,6 +107,111 @@ const Login = ({ navigation }) => {
     } catch (error) {
       alert(error.message);
     }
+  };
+
+  const SignInWithFacebook = () => {
+    let user = {};
+
+    facebookPromptLogin().then(async (response) => {
+      if (response.type === "success") {
+        let userInfo = await fetch(
+          `https://graph.facebook.com/me?fields=name,email,picture&access_token=${response.authentication.accessToken}`
+        );
+        userInfo.json().then(async (data) => {
+          const usersRef = collection(db, "users");
+          const userQuery = query(usersRef, where("email", "==", data.email));
+          const querySnapshot = await getDocs(userQuery);
+          querySnapshot.forEach((doc) => {
+            if (doc) {
+              user = doc.data();
+            }
+          });
+
+          if (Object.keys(user).length !== 0) {
+            signInWithEmailAndPassword(auth, data.email, data.name)
+              .then((data) =>
+                updateDoc(doc(db, "users", data.user.uid), {
+                  online: true,
+                })
+              )
+              .catch((err) => alert(err.message));
+          } else {
+            const url = await uploadImage(data.picture.data.url);
+
+            createUserWithEmailAndPassword(auth, data.email, data.name)
+              .then(async (authUser) => {
+                await setDoc(doc(db, "users", authUser.user.uid), {
+                  displayName: data.name,
+                  email: data.email,
+                  photoURL: url,
+                  online: true,
+                });
+                updateProfile(authUser.user, {
+                  displayName: data.name,
+                  photoURL: url,
+                });
+              })
+              .catch((err) => alert(err.message));
+          }
+        });
+      }
+    });
+  };
+
+  const SignInWithGoogle = async () => {
+    let user = {};
+
+    googlePromptLogin().then(async (response) => {
+      if (response.type === "success") {
+        let userInfo = await fetch(
+          "https://www.googleapis.com/userinfo/v2/me",
+          {
+            headers: {
+              Authorization: "Bearer " + response.authentication.accessToken,
+            },
+          }
+        );
+        userInfo.json().then(async (data) => {
+          const usersRef = collection(db, "users");
+          const userQuery = query(usersRef, where("email", "==", data.email));
+          const querySnapshot = await getDocs(userQuery);
+          querySnapshot.forEach((doc) => {
+            if (doc) {
+              user = doc.data();
+            }
+          });
+
+          if (Object.keys(user).length !== 0) {
+            signInWithEmailAndPassword(auth, data.email, data.picture)
+              .then((data) =>
+                updateDoc(doc(db, "users", data.user.uid), {
+                  online: true,
+                })
+              )
+              .catch((err) => alert(err.message));
+          } else {
+            const url = await uploadImage(data.picture);
+
+            createUserWithEmailAndPassword(auth, data.email, data.picture)
+              .then(async (authUser) => {
+                await setDoc(doc(db, "users", authUser.user.uid), {
+                  displayName: data.name,
+                  email: data.email,
+                  photoURL: url,
+                  online: true,
+                });
+                updateProfile(authUser.user, {
+                  displayName: data.name,
+                  photoURL: url,
+                });
+              })
+              .catch((err) => alert(err.message));
+          }
+        });
+        // await signInWithCredential(auth, credential);
+      }
+    });
+    // return Promise.reject();
   };
 
   return (
@@ -157,7 +254,44 @@ const Login = ({ navigation }) => {
         <Ionicons name="log-in" size={20} color="#001e2b" />
         <Text style={styles.btnText}>Login</Text>
       </TouchableOpacity>
+      <Text
+        style={{
+          color: "#fff",
+        }}
+      >
+        Or
+      </Text>
+      <TouchableOpacity
+        style={[styles.button, styles.googleButton]}
+        onPress={SignInWithGoogle}
+      >
+        {/* <Ionicons name="logo-google" size={17} color="#001e2b" /> */}
+        <Image
+          style={{
+            width: 20,
+            height: 20,
+          }}
+          source={require("../assets/googleicon.png")}
+        />
+        <Text style={styles.btnText}>Login with Google</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.button, styles.facebookButton]}
+        onPress={SignInWithFacebook}
+      >
+        <Ionicons name="logo-facebook" size={20} color="#ffffff" />
 
+        <Text
+          style={[
+            styles.btnText,
+            {
+              color: "#fff",
+            },
+          ]}
+        >
+          Login with Facebook
+        </Text>
+      </TouchableOpacity>
       <View style={styles.footer}>
         <Text style={styles.label}>Don't have an account? </Text>
         <TouchableOpacity onPress={() => navigation.navigate("Register")}>

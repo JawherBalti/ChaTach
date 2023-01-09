@@ -31,7 +31,7 @@ const Home = ({ navigation }) => {
 
   useEffect(() => {
     if (isFocused) {
-      getChats();
+      getRooms();
     }
   }, [isFocused]);
 
@@ -63,7 +63,7 @@ const Home = ({ navigation }) => {
     );
   };
 
-  const getChats = async () => {
+  const getRooms = async () => {
     const unsubscribe = await getDocs(collection(db, "chats"));
     unsubscribe.forEach((doc) => {
       chatsData.push({

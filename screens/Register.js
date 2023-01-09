@@ -36,22 +36,29 @@ const Register = ({ navigation }) => {
 
   const pickImage = async () => {
     // No permissions request is necessary for launching the image library
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      aspect: [4, 3],
-      quality: 1,
-      base64: true,
-    });
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted) {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        aspect: [4, 3],
+        quality: 1,
+        base64: true,
+        allowsEditing: true,
+      });
 
-    if (!result.canceled) {
-      let imageObj = {
-        uri: result.assets[0].uri,
-        type: `test/${result.assets[0].uri.split(".")[1]}`,
-        name: `test.${result.assets[0].uri.split(".")[1]}`,
-      };
-      setImage(imageObj);
+      if (!result.canceled) {
+        let imageObj = {
+          uri: result.assets[0].uri,
+          type: `test/${result.assets[0].uri.split(".")[1]}`,
+          name: `test.${result.assets[0].uri.split(".")[1]}`,
+        };
+        setImage(imageObj);
 
-      setImagePreview(result.assets[0].uri);
+        setImagePreview(result.assets[0].uri);
+      }
+    } else {
+      alert("Access to photos refused!");
     }
   };
 
@@ -174,7 +181,7 @@ const Register = ({ navigation }) => {
           <Text style={styles.link}>Login</Text>
         </TouchableOpacity>
       </View>
-      <View style={{ height: 90 }} />
+      <View style={{ height: 100 }} />
     </View>
   );
 };
@@ -195,8 +202,8 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   preview: {
-    width: 70,
-    height: 70,
+    width: 60,
+    height: 60,
     borderRadius: 50,
   },
   selectAvatar: {

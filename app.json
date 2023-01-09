@@ -4,7 +4,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "ChaTach will access your photos so you share them with your friends."
+          "photosPermission": "ChaTach will access your photos to set a profile picture."
         }
       ]
     ],
