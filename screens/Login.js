@@ -29,12 +29,14 @@ import HeaderLeft from "../components/HeaderLeft";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import * as Facebook from "expo-auth-session/providers/facebook";
+import Spinner from "react-native-loading-spinner-overlay";
 
 WebBrowser.maybeCompleteAuthSession();
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const [googleRequest, googleResponse, googlePromptLogin] =
     Google.useAuthRequest(
@@ -78,13 +80,15 @@ const Login = ({ navigation }) => {
   }, []);
 
   const login = () => {
+    setLoading(true);
     //no need for the clause because we have a listener in the useEffect
     signInWithEmailAndPassword(auth, email, password)
-      .then((data) =>
+      .then((data) => {
+        setLoading(false);
         updateDoc(doc(db, "users", data.user.uid), {
           online: true,
-        })
-      )
+        });
+      })
       .catch((err) => alert(err));
   };
 
@@ -111,6 +115,7 @@ const Login = ({ navigation }) => {
 
   const SignInWithFacebook = () => {
     let user = {};
+    setLoading(false);
 
     facebookPromptLogin().then(async (response) => {
       if (response.type === "success") {
@@ -155,12 +160,13 @@ const Login = ({ navigation }) => {
           }
         });
       }
+      setLoading(true);
     });
   };
 
   const SignInWithGoogle = async () => {
     let user = {};
-
+    setLoading(false);
     googlePromptLogin().then(async (response) => {
       if (response.type === "success") {
         let userInfo = await fetch(
@@ -208,15 +214,16 @@ const Login = ({ navigation }) => {
               .catch((err) => alert(err.message));
           }
         });
-        // await signInWithCredential(auth, credential);
       }
+      setLoading(true);
     });
-    // return Promise.reject();
   };
 
   return (
     <View style={styles.container}>
+      {loading && <Spinner visible={loading} color="#ffffff" />}
       <Text style={styles.title}>Login</Text>
+
       <View style={styles.inputContainer}>
         <View>
           <Text style={styles.label}>Email Address</Text>

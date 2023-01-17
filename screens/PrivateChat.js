@@ -7,8 +7,9 @@ import {
   TouchableWithoutFeedback,
   View,
   FlatList,
+  AppState,
 } from "react-native";
-import React, { useLayoutEffect, useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "react-native-elements";
 import { db, auth } from "../firebase";
@@ -22,11 +23,17 @@ import {
 } from "firebase/firestore";
 import HeaderRight from "../components/HeaderRight";
 import HeaderLeft from "../components/HeaderLeft";
-import { color } from "react-native-elements/dist/helpers";
+import Spinner from "react-native-loading-spinner-overlay";
+import { registerIndieID } from "native-notify";
+
+// npx expo install expo-device expo-notifications
 
 const PrivateChat = ({ navigation, route }) => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const appState = useRef(AppState.currentState);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -38,23 +45,50 @@ const PrivateChat = ({ navigation, route }) => {
   }, [navigation]);
 
   useLayoutEffect(() => {
+    setLoading(true);
     const unsub = onSnapshot(
       query(collection(db, "privateMessages"), orderBy("timestamp", "desc")),
       (snapshot) => {
-        setMessages(
-          snapshot.docs
-            .map((doc) => ({
-              id: doc.id,
-              data: doc.data(),
-            }))
-            .filter(
-              (message) =>
-                (message.data.senderEmail === auth.currentUser.email &&
-                  message.data.recieverEmail === route.params.data.email) ||
-                (message.data.senderEmail === route.params.data.email &&
-                  message.data.recieverEmail === auth.currentUser.email)
-            )
-        );
+        const allMessages = snapshot.docs
+          .map((doc) => ({
+            id: doc.id,
+            data: doc.data(),
+          }))
+          .filter(
+            (message) =>
+              (message.data.senderEmail === auth.currentUser.email &&
+                message.data.recieverEmail === route.params.data.email) ||
+              (message.data.senderEmail === route.params.data.email &&
+                message.data.recieverEmail === auth.currentUser.email)
+          );
+
+        setMessages(allMessages);
+
+        setLoading(false);
+
+        // const lastMessage = allMessages[0];
+
+        // if (lastMessage?.data?.recieverEmail === auth.currentUser.email) {
+        //   const notifData = {
+        //     subID: lastMessage?.data?.recieverEmail,
+        //     appId: 5714,
+        //     appToken: "SjNbNi7iZK3N2k3C1jM21X",
+        //     title: `${lastMessage?.data?.displayName} sent you a message!`,
+        //     message: lastMessage?.data?.message,
+        //   };
+
+        //   fetch(`https://app.nativenotify.com/api/indie/notification`, {
+        //     mode: "cors", // no-cors, *cors, same-origin
+        //     cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+        //     credentials: "same-origin", // include, *same-origin, omit
+        //     headers: {
+        //       "Content-Type": "application/json",
+        //       // 'Content-Type': 'application/x-www-form-urlencoded',
+        //     },
+        //     method: "POST",
+        //     body: JSON.stringify(notifData),
+        //   });
+        // }
       }
     );
     return unsub;
@@ -77,6 +111,8 @@ const PrivateChat = ({ navigation, route }) => {
 
   return (
     <View style={styles.container}>
+      {loading && <Spinner visible={loading} color="#ffffff" />}
+
       <View style={styles.chatHeader}>
         <Text style={styles.headerText}>
           You are chatting with {route.params.data.displayName}

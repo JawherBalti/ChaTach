@@ -11,9 +11,11 @@ import { collection, addDoc } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import HeaderLeft from "../components/HeaderLeft";
 import HeaderRight from "../components/HeaderRight";
+import Spinner from "react-native-loading-spinner-overlay";
 
 const CreateRoom = ({ navigation }) => {
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -27,19 +29,25 @@ const CreateRoom = ({ navigation }) => {
   }, [navigation]);
 
   const createChat = async () => {
+    setLoading(false);
     if (input) {
-      await addDoc(collection(db, "chats"), {
-        chatName: input,
-      })
-        .then(() => {
+      setLoading(true);
+      try {
+        const doc = await addDoc(collection(db, "chats"), {
+          chatName: input,
+        });
+        if (doc) {
           navigation.goBack();
-        })
-        .catch((err) => alert(err));
+        }
+      } catch (err) {
+        alert(err);
+      }
     } else alert("Room name cannot be empty!");
   };
 
   return (
     <View style={styles.container}>
+      {loading && <Spinner visible={loading} color="#ffffff" />}
       <Text style={styles.text}>Create a new Room</Text>
       <View style={styles.input}>
         <Ionicons name="ios-create" size={20} color="#001e2b" />

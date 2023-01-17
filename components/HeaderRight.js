@@ -1,26 +1,32 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { auth, db } from "../firebase";
 import { Ionicons } from "@expo/vector-icons";
 import { doc, updateDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { Avatar } from "react-native-elements";
 import { useRoute } from "@react-navigation/native";
+import Spinner from "react-native-loading-spinner-overlay";
 
 const HeaderRight = ({ navigation }) => {
+  const [loading, setLoading] = useState(false);
+
   const route = useRoute();
 
   const signOutUser = () => {
+    setLoading(true);
     updateDoc(doc(db, "users", auth.currentUser.uid), {
       online: false,
     });
     signOut(auth).then(() => {
+      setLoading(false);
       navigation.replace("Login");
     });
   };
 
   return (
     <View style={styles.headerRight}>
+      {loading && <Spinner visible={loading} color="#ffffff" />}
       {auth?.currentUser ? (
         <View
           style={{

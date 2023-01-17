@@ -23,10 +23,12 @@ import {
 } from "firebase/firestore";
 import HeaderRight from "../components/HeaderRight";
 import HeaderLeft from "../components/HeaderLeft";
+import Spinner from "react-native-loading-spinner-overlay";
 
 const PublicChat = ({ navigation, route }) => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -38,6 +40,7 @@ const PublicChat = ({ navigation, route }) => {
   }, [navigation]);
 
   useLayoutEffect(() => {
+    setLoading(true);
     const unsub = onSnapshot(
       query(
         collection(db, "chats", route.params.id, "messages"),
@@ -50,6 +53,7 @@ const PublicChat = ({ navigation, route }) => {
             data: doc.data(),
           }))
         );
+        setLoading(false);
       }
     );
     return unsub;
@@ -70,6 +74,7 @@ const PublicChat = ({ navigation, route }) => {
 
   return (
     <View style={styles.container}>
+      {loading && <Spinner visible={loading} color="#ffffff" />}
       <View style={styles.chatHeader}>
         <Text style={styles.headerText}>
           welcome to {route.params.chatName}

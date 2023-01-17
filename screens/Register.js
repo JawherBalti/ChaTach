@@ -15,11 +15,14 @@ import { doc, setDoc } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import HeaderLeft from "../components/HeaderLeft";
 import HeaderRight from "../components/HeaderRight";
+import Spinner from "react-native-loading-spinner-overlay";
+import { registerIndieID } from "native-notify";
 
 const Register = ({ navigation }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [image, setImage] = useState(
     "https://d2cbg94ubxgsnp.cloudfront.net/Pictures/2000xAny/9/9/2/512992_shutterstock_715962319converted_749269.png"
   );
@@ -85,9 +88,10 @@ const Register = ({ navigation }) => {
 
   const register = async () => {
     const url = await uploadImage(image);
-
+    setLoading(true);
     createUserWithEmailAndPassword(auth, email, password)
       .then(async (authUser) => {
+        setLoading(false);
         await setDoc(doc(db, "users", authUser.user.uid), {
           displayName: name,
           email: email,
@@ -98,12 +102,14 @@ const Register = ({ navigation }) => {
           displayName: name,
           photoURL: url,
         });
+        registerIndieID(email, 5714, "SjNbNi7iZK3N2k3C1jM21X");
       })
       .catch((err) => alert(err.message));
   };
 
   return (
     <View style={styles.container}>
+      {loading && <Spinner visible={loading} color="#ffffff" />}
       <Text style={styles.title}>Register</Text>
 
       {/* <Button title="Pick an image from camera roll" onPress={pickImage} /> */}

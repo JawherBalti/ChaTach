@@ -16,6 +16,7 @@ import UsersList from "../components/UsersList";
 import RoomsList from "../components/RoomsList";
 import HeaderLeft from "../components/HeaderLeft";
 import HeaderRight from "../components/HeaderRight";
+import Spinner from "react-native-loading-spinner-overlay";
 
 const Home = ({ navigation }) => {
   const [chats, setChats] = useState([]);
@@ -23,6 +24,7 @@ const Home = ({ navigation }) => {
   const [isRooms, setIsRooms] = useState(true);
   const [searchedUser, setSearchedUser] = useState("");
   const [searchedRoom, setSearchedRoom] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const isFocused = useIsFocused();
 
@@ -51,6 +53,7 @@ const Home = ({ navigation }) => {
   }, [navigation]);
 
   const getUsers = async () => {
+    setLoading(true);
     const unsubscribe = await getDocs(collection(db, "users"));
     unsubscribe.forEach((doc) => {
       usersData.push({
@@ -58,12 +61,14 @@ const Home = ({ navigation }) => {
         data: doc.data(),
       });
     });
+    setLoading(false);
     setUsers(
       usersData.filter((user) => user.data.email !== auth.currentUser.email)
     );
   };
 
   const getRooms = async () => {
+    setLoading(true);
     const unsubscribe = await getDocs(collection(db, "chats"));
     unsubscribe.forEach((doc) => {
       chatsData.push({
@@ -71,6 +76,7 @@ const Home = ({ navigation }) => {
         data: doc.data(),
       });
     });
+    setLoading(false);
     setChats(chatsData);
   };
 
@@ -106,6 +112,7 @@ const Home = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {loading && <Spinner visible={loading} color="#ffffff" />}
       <View style={styles.homeBtnContainer}>
         <TouchableOpacity
           style={[
