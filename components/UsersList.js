@@ -1,13 +1,25 @@
-import { StyleSheet, View } from "react-native";
-import React, { useLayoutEffect, useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useLayoutEffect, useState, useEffect } from "react";
 import { Avatar, ListItem } from "react-native-elements";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  orderBy,
+  query,
+  updateDoc,
+} from "firebase/firestore";
 import { auth, db } from "../firebase";
+import { Ionicons } from "@expo/vector-icons";
 
-const UsersList = ({ id, data, enterPrivateChat }) => {
+const UsersList = ({ id, data, enterPrivateChat, allUsers }) => {
   const [chatMessages, setChatMessages] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isBanned, setIsBanned] = useState(data.isBanned);
 
   useLayoutEffect(() => {
+    console.log(isBanned);
     const unsub = onSnapshot(
       query(collection(db, "privateMessages"), orderBy("timestamp", "desc")),
       (snapshot) => {
@@ -29,6 +41,29 @@ const UsersList = ({ id, data, enterPrivateChat }) => {
     );
     return unsub;
   }, []);
+
+  useEffect(() => {
+    getUserAdmin();
+  }, []);
+
+  const getUserAdmin = async () => {
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    const userSnap = await getDoc(userRef);
+    setIsAdmin(userSnap.data().isAdmin);
+  };
+
+  const banUser = () => {
+    updateDoc(doc(db, "users", data.id), {
+      isBanned: true,
+    });
+    setIsBanned(true);
+  };
+  const unbanUser = () => {
+    updateDoc(doc(db, "users", data.id), {
+      isBanned: false,
+    });
+    setIsBanned(false);
+  };
 
   return (
     <ListItem
@@ -72,6 +107,37 @@ const UsersList = ({ id, data, enterPrivateChat }) => {
           </ListItem.Subtitle>
         )}
       </ListItem.Content>
+      {isAdmin ? (
+        !isBanned ? (
+          <TouchableOpacity
+            style={[
+              styles.btn,
+              {
+                backgroundColor: "#00ed64",
+              },
+            ]}
+            onPress={banUser}
+          >
+            <Ionicons name="lock-closed" size={17} color="#001e2b" />
+
+            <Text style={styles.btnText}>Ban</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[
+              styles.btn,
+              {
+                backgroundColor: "#00ed64",
+              },
+            ]}
+            onPress={unbanUser}
+          >
+            <Ionicons name="lock-open" size={17} color="#001e2b" />
+
+            <Text style={styles.btnText}>Unban</Text>
+          </TouchableOpacity>
+        )
+      ) : null}
     </ListItem>
   );
 };
@@ -91,6 +157,21 @@ const styles = StyleSheet.create({
     borderColor: "#ffffff",
     top: "60%",
     left: "65%",
+  },
+
+  btn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-evenly",
+    borderWidth: 1,
+    borderColor: "#ffffff",
+    padding: 8,
+    borderRadius: 5,
+    width: 75,
+    textAlign: "center",
+  },
+  btnText: {
+    color: "#001e2b",
   },
 
   usersList: { backgroundColor: "#001E2B", padding: 10 },

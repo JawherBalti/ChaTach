@@ -9,7 +9,7 @@ import {
   FlatList,
   AppState,
 } from "react-native";
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "react-native-elements";
 import { db, auth } from "../firebase";
@@ -24,7 +24,6 @@ import {
 import HeaderRight from "../components/HeaderRight";
 import HeaderLeft from "../components/HeaderLeft";
 import Spinner from "react-native-loading-spinner-overlay";
-import { registerIndieID } from "native-notify";
 
 // npx expo install expo-device expo-notifications
 
@@ -33,7 +32,26 @@ const PrivateChat = ({ navigation, route }) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const appState = useRef(AppState.currentState);
+  // const appState = useRef(AppState.currentState);
+
+  // const [appStateVisible, setAppStateVisible] = useState(appState.current);
+
+  // useEffect(() => {
+  //   const subscription = AppState.addEventListener("change", (nextAppState) => {
+  //     if (
+  //       appState.current.match(/inactive|background/) &&
+  //       nextAppState === "active"
+  //     ) {
+  //     }
+
+  //     appState.current = nextAppState;
+  //     setAppStateVisible(appState.current);
+  //   });
+
+  //   return () => {
+  //     subscription.remove();
+  //   };
+  // }, []);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -65,30 +83,6 @@ const PrivateChat = ({ navigation, route }) => {
         setMessages(allMessages);
 
         setLoading(false);
-
-        // const lastMessage = allMessages[0];
-
-        // if (lastMessage?.data?.recieverEmail === auth.currentUser.email) {
-        //   const notifData = {
-        //     subID: lastMessage?.data?.recieverEmail,
-        //     appId: 5714,
-        //     appToken: "SjNbNi7iZK3N2k3C1jM21X",
-        //     title: `${lastMessage?.data?.displayName} sent you a message!`,
-        //     message: lastMessage?.data?.message,
-        //   };
-
-        //   fetch(`https://app.nativenotify.com/api/indie/notification`, {
-        //     mode: "cors", // no-cors, *cors, same-origin
-        //     cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-        //     credentials: "same-origin", // include, *same-origin, omit
-        //     headers: {
-        //       "Content-Type": "application/json",
-        //       // 'Content-Type': 'application/x-www-form-urlencoded',
-        //     },
-        //     method: "POST",
-        //     body: JSON.stringify(notifData),
-        //   });
-        // }
       }
     );
     return unsub;
@@ -97,18 +91,38 @@ const PrivateChat = ({ navigation, route }) => {
   const sendMessage = async () => {
     Keyboard.dismiss();
 
-    addDoc(collection(db, "privateMessages"), {
+    const message = {
       timestamp: serverTimestamp(),
       message: input,
       displayName: auth.currentUser.displayName,
       photoURL: auth.currentUser.photoURL,
       senderEmail: auth.currentUser.email,
       recieverEmail: route.params.data.email,
-    });
+    };
+
+    addDoc(collection(db, "privateMessages"), message);
 
     setInput("");
-  };
+    // const notifData = {
+    //   subID: message.recieverEmail,
+    //   appId: 5714,
+    //   appToken: "SjNbNi7iZK3N2k3C1jM21X",
+    //   title: `${message.displayName} sent you a message!`,
+    //   message: message.message,
+    // };
 
+    // fetch(`https://app.nativenotify.com/api/indie/notification`, {
+    //   mode: "cors", // no-cors, *cors, same-origin
+    //   cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+    //   credentials: "same-origin", // include, *same-origin, omit
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //     // 'Content-Type': 'application/x-www-form-urlencoded',
+    //   },
+    //   method: "POST",
+    //   body: JSON.stringify(notifData),
+    // });
+  };
   return (
     <View style={styles.container}>
       {loading && <Spinner visible={loading} color="#ffffff" />}

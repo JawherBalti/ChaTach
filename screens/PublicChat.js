@@ -43,7 +43,7 @@ const PublicChat = ({ navigation, route }) => {
     setLoading(true);
     const unsub = onSnapshot(
       query(
-        collection(db, "chats", route.params.id, "messages"),
+        collection(db, "publicMessages", route.params.id, "messages"),
         orderBy("timestamp", "desc")
       ),
       (snapshot) => {
@@ -62,7 +62,7 @@ const PublicChat = ({ navigation, route }) => {
   const sendMessage = async () => {
     Keyboard.dismiss();
 
-    addDoc(collection(doc(db, "chats", route.params.id), "messages"), {
+    addDoc(collection(doc(db, "publicMessages", route.params.id), "messages"), {
       timestamp: serverTimestamp(),
       message: input,
       displayName: auth.currentUser.displayName,

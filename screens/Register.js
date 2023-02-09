@@ -11,7 +11,12 @@ import { Text } from "react-native-elements";
 import { auth, db } from "../firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import * as ImagePicker from "expo-image-picker";
-import { doc, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getCountFromServer,
+  setDoc,
+} from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import HeaderLeft from "../components/HeaderLeft";
 import HeaderRight from "../components/HeaderRight";
@@ -88,15 +93,24 @@ const Register = ({ navigation }) => {
 
   const register = async () => {
     const url = await uploadImage(image);
+
+    const users = collection(db, "users");
+    const snapshot = await getCountFromServer(users);
+    const usersCount = snapshot.data().count;
+
     setLoading(true);
     createUserWithEmailAndPassword(auth, email, password)
       .then(async (authUser) => {
         setLoading(false);
         await setDoc(doc(db, "users", authUser.user.uid), {
+          id: authUser.user.uid,
           displayName: name,
           email: email,
           photoURL: url,
           online: true,
+          isBanned: false,
+          blockedBy: [],
+          isAdmin: usersCount > 0 ? false : true,
         });
         updateProfile(authUser.user, {
           displayName: name,

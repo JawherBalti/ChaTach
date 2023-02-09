@@ -1,8 +1,8 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useLayoutEffect } from "react";
 import { auth, db } from "../firebase";
 import { Ionicons } from "@expo/vector-icons";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { Avatar } from "react-native-elements";
 import { useRoute } from "@react-navigation/native";
@@ -10,8 +10,21 @@ import Spinner from "react-native-loading-spinner-overlay";
 
 const HeaderRight = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
+  const [isBanned, setIsBanned] = useState(false);
 
   const route = useRoute();
+
+  useLayoutEffect(() => {
+    getUserBanned();
+  }, []);
+
+  const getUserBanned = async () => {
+    if (auth.currentUser) {
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      const userSnap = await getDoc(userRef);
+      setIsBanned(userSnap.data().isBanned);
+    }
+  };
 
   const signOutUser = () => {
     setLoading(true);
@@ -34,7 +47,7 @@ const HeaderRight = ({ navigation }) => {
             alignItems: "center",
           }}
         >
-          {route.name === "Home" ? (
+          {route.name === "Home" && !isBanned ? (
             <TouchableOpacity
               onPress={() => navigation.navigate("CreateRoom")}
               activeOpacity={0.5}

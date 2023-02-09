@@ -17,6 +17,7 @@ import {
 import {
   collection,
   doc,
+  getCountFromServer,
   getDocs,
   query,
   setDoc,
@@ -143,13 +144,21 @@ const Login = ({ navigation }) => {
           } else {
             const url = await uploadImage(data.picture.data.url);
 
+            const users = collection(db, "users");
+            const snapshot = await getCountFromServer(users);
+            const usersCount = snapshot.data().count;
+
             createUserWithEmailAndPassword(auth, data.email, data.name)
               .then(async (authUser) => {
                 await setDoc(doc(db, "users", authUser.user.uid), {
+                  id: authUser.user.uid,
                   displayName: data.name,
                   email: data.email,
                   photoURL: url,
                   online: true,
+                  isBanned: false,
+                  blockedBy: [],
+                  isAdmin: usersCount > 0 ? false : true,
                 });
                 updateProfile(authUser.user, {
                   displayName: data.name,
@@ -198,13 +207,21 @@ const Login = ({ navigation }) => {
           } else {
             const url = await uploadImage(data.picture);
 
+            const users = collection(db, "users");
+            const snapshot = await getCountFromServer(users);
+            const usersCount = snapshot.data().count;
+
             createUserWithEmailAndPassword(auth, data.email, data.picture)
               .then(async (authUser) => {
                 await setDoc(doc(db, "users", authUser.user.uid), {
+                  id: authUser.user.uid,
                   displayName: data.name,
                   email: data.email,
                   photoURL: url,
                   online: true,
+                  isBanned: false,
+                  blockedBy: [],
+                  isAdmin: usersCount > 0 ? false : true,
                 });
                 updateProfile(authUser.user, {
                   displayName: data.name,

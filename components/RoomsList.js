@@ -10,7 +10,7 @@ const RoomsList = ({ id, data, enterChat }) => {
   useEffect(() => {
     const unsub = onSnapshot(
       query(
-        collection(db, "chats", id, "messages"),
+        collection(db, "publicMessages", id, "messages"),
         orderBy("timestamp", "desc")
       ),
       (snapshot) => {

@@ -10,17 +10,19 @@ import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { Divider } from "react-native-elements";
 import { Ionicons } from "@expo/vector-icons";
 import { auth, db } from "../firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useIsFocused } from "@react-navigation/native";
 import UsersList from "../components/UsersList";
 import RoomsList from "../components/RoomsList";
 import HeaderLeft from "../components/HeaderLeft";
 import HeaderRight from "../components/HeaderRight";
 import Spinner from "react-native-loading-spinner-overlay";
+import Banned from "../components/Banned";
 
 const Home = ({ navigation }) => {
   const [chats, setChats] = useState([]);
   const [users, setUsers] = useState([]);
+  const [isBanned, setIsBanned] = useState(false);
   const [isRooms, setIsRooms] = useState(true);
   const [searchedUser, setSearchedUser] = useState("");
   const [searchedRoom, setSearchedRoom] = useState("");
@@ -34,6 +36,7 @@ const Home = ({ navigation }) => {
   useEffect(() => {
     if (isFocused) {
       getRooms();
+      getUserBanned();
     }
   }, [isFocused]);
 
@@ -52,6 +55,12 @@ const Home = ({ navigation }) => {
     });
   }, [navigation]);
 
+  const getUserBanned = async () => {
+    const userRef = doc(db, "users", auth?.currentUser?.uid);
+    const userSnap = await getDoc(userRef);
+    setIsBanned(userSnap.data().isBanned);
+  };
+
   const getUsers = async () => {
     setLoading(true);
     const unsubscribe = await getDocs(collection(db, "users"));
@@ -62,14 +71,12 @@ const Home = ({ navigation }) => {
       });
     });
     setLoading(false);
-    setUsers(
-      usersData.filter((user) => user.data.email !== auth.currentUser.email)
-    );
+    setUsers(usersData);
   };
 
   const getRooms = async () => {
     setLoading(true);
-    const unsubscribe = await getDocs(collection(db, "chats"));
+    const unsubscribe = await getDocs(collection(db, "publicMessages"));
     unsubscribe.forEach((doc) => {
       chatsData.push({
         id: doc.id,
@@ -81,11 +88,13 @@ const Home = ({ navigation }) => {
   };
 
   const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
-      return user.data.displayName
-        .toLowerCase()
-        .includes(searchedUser.toLowerCase());
-    });
+    return users
+      .filter((user) => user.data.email !== auth.currentUser.email)
+      .filter((user) => {
+        return user.data.displayName
+          .toLowerCase()
+          .includes(searchedUser.toLowerCase());
+      });
   }, [users, searchedUser]);
 
   const filteredRooms = useMemo(() => {
@@ -111,97 +120,103 @@ const Home = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      {loading && <Spinner visible={loading} color="#ffffff" />}
-      <View style={styles.homeBtnContainer}>
-        <TouchableOpacity
-          style={[
-            styles.btn,
-            {
-              backgroundColor: !isRooms ? "#ffffff" : "#00ed64",
-            },
-          ]}
-          onPress={() => setIsRooms(true)}
-        >
-          <Ionicons name="megaphone" size={17} color="#001e2b" />
-
-          <Text style={styles.btnText}>Rooms</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.btn,
-            ,
-            {
-              backgroundColor: isRooms ? "#ffffff" : "#00ed64",
-            },
-          ]}
-          onPress={() => {
-            setIsRooms(false);
-            getUsers();
-          }}
-        >
-          <Ionicons name="people" size={20} color="#001e2b" />
-          <Text style={styles.btnText}>Users</Text>
-        </TouchableOpacity>
-      </View>
-      <Divider />
-
-      <View style={styles.search}>
-        {isRooms ? (
-          <View style={styles.input}>
-            <Ionicons name="md-search" size={20} color="#001e2b" />
-
-            <TextInput
-              style={styles.textInput}
-              value={searchedRoom}
-              onChangeText={(text) => setSearchedRoom(text)}
-              placeholder="Find a Room..."
-              placeholderTextColor="grey"
-            />
-          </View>
-        ) : (
-          <View style={styles.input}>
-            <Ionicons name="md-search" size={20} color="#001e2b" />
-
-            <TextInput
-              value={searchedUser}
-              onChangeText={(text) => setSearchedUser(text)}
-              placeholder="Find a User..."
-              placeholderTextColor="grey"
-              style={styles.textInput}
-            />
-          </View>
-        )}
-      </View>
-
-      {isRooms ? (
-        <FlatList
-          style={styles.listBg}
-          data={filteredRooms}
-          keyExtractor={(item) => item.id}
-          renderItem={(data) => (
-            <RoomsList
-              id={data.item.id}
-              data={data.item.data}
-              enterChat={enterChat}
-            />
-          )}
-        />
+    <>
+      {isBanned ? (
+        <Banned />
       ) : (
-        <FlatList
-          style={styles.listBg}
-          data={filteredUsers}
-          keyExtractor={(item) => item.id}
-          renderItem={(data) => (
-            <UsersList
-              id={data.item.id}
-              data={data.item.data}
-              enterPrivateChat={enterPrivateChat}
+        <View style={styles.container}>
+          {loading && <Spinner visible={loading} color="#ffffff" />}
+          <View style={styles.homeBtnContainer}>
+            <TouchableOpacity
+              style={[
+                styles.btn,
+                {
+                  backgroundColor: !isRooms ? "#ffffff" : "#00ed64",
+                },
+              ]}
+              onPress={() => setIsRooms(true)}
+            >
+              <Ionicons name="megaphone" size={17} color="#001e2b" />
+
+              <Text style={styles.btnText}>Rooms</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.btn,
+                ,
+                {
+                  backgroundColor: isRooms ? "#ffffff" : "#00ed64",
+                },
+              ]}
+              onPress={() => {
+                setIsRooms(false);
+                getUsers();
+              }}
+            >
+              <Ionicons name="people" size={20} color="#001e2b" />
+              <Text style={styles.btnText}>Users</Text>
+            </TouchableOpacity>
+          </View>
+          <Divider />
+
+          <View style={styles.search}>
+            {isRooms ? (
+              <View style={styles.input}>
+                <Ionicons name="md-search" size={20} color="#001e2b" />
+
+                <TextInput
+                  style={styles.textInput}
+                  value={searchedRoom}
+                  onChangeText={(text) => setSearchedRoom(text)}
+                  placeholder="Find a Room..."
+                  placeholderTextColor="grey"
+                />
+              </View>
+            ) : (
+              <View style={styles.input}>
+                <Ionicons name="md-search" size={20} color="#001e2b" />
+
+                <TextInput
+                  value={searchedUser}
+                  onChangeText={(text) => setSearchedUser(text)}
+                  placeholder="Find a User..."
+                  placeholderTextColor="grey"
+                  style={styles.textInput}
+                />
+              </View>
+            )}
+          </View>
+
+          {isRooms ? (
+            <FlatList
+              style={styles.listBg}
+              data={filteredRooms}
+              keyExtractor={(item) => item.id}
+              renderItem={(data) => (
+                <RoomsList
+                  id={data.item.id}
+                  data={data.item.data}
+                  enterChat={enterChat}
+                />
+              )}
+            />
+          ) : (
+            <FlatList
+              style={styles.listBg}
+              data={filteredUsers}
+              keyExtractor={(item) => item.id}
+              renderItem={(data) => (
+                <UsersList
+                  id={data.item.id}
+                  data={data.item.data}
+                  enterPrivateChat={enterPrivateChat}
+                />
+              )}
             />
           )}
-        />
+        </View>
       )}
-    </View>
+    </>
   );
 };
 

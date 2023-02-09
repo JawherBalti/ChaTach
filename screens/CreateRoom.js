@@ -33,7 +33,7 @@ const CreateRoom = ({ navigation }) => {
     if (input) {
       setLoading(true);
       try {
-        const doc = await addDoc(collection(db, "chats"), {
+        const doc = await addDoc(collection(db, "publicMessages"), {
           chatName: input,
         });
         if (doc) {
