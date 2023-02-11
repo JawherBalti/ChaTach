@@ -19,7 +19,6 @@ const UsersList = ({ id, data, enterPrivateChat, allUsers }) => {
   const [isBanned, setIsBanned] = useState(data.isBanned);
 
   useLayoutEffect(() => {
-    console.log(isBanned);
     const unsub = onSnapshot(
       query(collection(db, "privateMessages"), orderBy("timestamp", "desc")),
       (snapshot) => {
@@ -107,6 +106,11 @@ const UsersList = ({ id, data, enterPrivateChat, allUsers }) => {
           </ListItem.Subtitle>
         )}
       </ListItem.Content>
+      {chatMessages.length > 0 &&
+      chatMessages?.[0]?.data.senderEmail !== auth.currentUser.email &&
+      !chatMessages?.[0]?.data.isRead ? (
+        <Text style={styles.msgNotification}>New</Text>
+      ) : null}
       {isAdmin ? (
         !isBanned ? (
           <TouchableOpacity
@@ -158,7 +162,15 @@ const styles = StyleSheet.create({
     top: "60%",
     left: "65%",
   },
-
+  msgNotification: {
+    color: "#ffffff",
+    borderRadius: 8,
+    backgroundColor: "#dc3545",
+    padding: 3,
+    fontSize: 10,
+    borderWidth: 1,
+    borderColor: "#ffffff",
+  },
   btn: {
     flexDirection: "row",
     alignItems: "center",

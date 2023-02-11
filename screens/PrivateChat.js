@@ -16,10 +16,12 @@ import { db, auth } from "../firebase";
 import {
   addDoc,
   collection,
+  doc,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 import HeaderRight from "../components/HeaderRight";
 import HeaderLeft from "../components/HeaderLeft";
@@ -74,15 +76,25 @@ const PrivateChat = ({ navigation, route }) => {
           }))
           .filter(
             (message) =>
-              (message.data.senderEmail === auth.currentUser.email &&
+              (message.data.senderEmail === auth?.currentUser?.email &&
                 message.data.recieverEmail === route.params.data.email) ||
               (message.data.senderEmail === route.params.data.email &&
-                message.data.recieverEmail === auth.currentUser.email)
+                message.data.recieverEmail === auth?.currentUser?.email)
           );
 
         setMessages(allMessages);
-
         setLoading(false);
+
+        //set last message to read
+        if (
+          allMessages.length > 0 &&
+          allMessages?.[0]?.data.senderEmail !== auth?.currentUser?.email &&
+          !allMessages?.[0]?.data.isRead
+        ) {
+          updateDoc(doc(db, "privateMessages", allMessages[0].id), {
+            isRead: true,
+          });
+        }
       }
     );
     return unsub;
@@ -218,6 +230,17 @@ const PrivateChat = ({ navigation, route }) => {
                 onBlur={() => console.log("not")}
                 onFocus={() => console.log("focus")}
               />
+              <View style={styles.inputActions}>
+                <TouchableOpacity>
+                  <Ionicons name="happy-outline" size={20} color="#001e2b" />
+                </TouchableOpacity>
+                <TouchableOpacity>
+                  <Ionicons name="image-outline" size={20} color="#001e2b" />
+                </TouchableOpacity>
+                <TouchableOpacity>
+                  <Ionicons name="flag-outline" size={20} color="#001e2b" />
+                </TouchableOpacity>
+              </View>
             </View>
             <TouchableOpacity
               activeOpacity={0.5}
@@ -323,7 +346,8 @@ const styles = StyleSheet.create({
   textInput: {
     color: "#001e2b",
     marginLeft: 5,
-    width: "65%",
+    width: "60%",
+    height: 35,
     fontSize: 12,
   },
   sendBtn: {
