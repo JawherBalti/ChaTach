@@ -26,7 +26,7 @@ const Home = ({ navigation }) => {
   const [isRooms, setIsRooms] = useState(true);
   const [searchedUser, setSearchedUser] = useState("");
   const [searchedRoom, setSearchedRoom] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const isFocused = useIsFocused();
 
@@ -62,7 +62,7 @@ const Home = ({ navigation }) => {
   };
 
   const getUsers = async () => {
-    setLoading(true);
+    setIsLoading(true);
     const unsubscribe = await getDocs(collection(db, "users"));
     unsubscribe.forEach((doc) => {
       usersData.push({
@@ -70,12 +70,12 @@ const Home = ({ navigation }) => {
         data: doc.data(),
       });
     });
-    setLoading(false);
+    setIsLoading(false);
     setUsers(usersData);
   };
 
   const getRooms = async () => {
-    setLoading(true);
+    setIsLoading(true);
     const unsubscribe = await getDocs(collection(db, "publicMessages"));
     unsubscribe.forEach((doc) => {
       chatsData.push({
@@ -83,7 +83,7 @@ const Home = ({ navigation }) => {
         data: doc.data(),
       });
     });
-    setLoading(false);
+    setIsLoading(false);
     setChats(chatsData);
   };
 
@@ -125,7 +125,7 @@ const Home = ({ navigation }) => {
         <Banned />
       ) : (
         <View style={styles.container}>
-          {loading && <Spinner visible={loading} color="#ffffff" />}
+          {isLoading && <Spinner visible={isLoading} color="#ffffff" />}
           <View style={styles.homeBtnContainer}>
             <TouchableOpacity
               style={[

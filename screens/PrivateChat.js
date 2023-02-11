@@ -91,18 +91,21 @@ const PrivateChat = ({ navigation, route }) => {
   const sendMessage = async () => {
     Keyboard.dismiss();
 
-    const message = {
-      timestamp: serverTimestamp(),
-      message: input,
-      displayName: auth.currentUser.displayName,
-      photoURL: auth.currentUser.photoURL,
-      senderEmail: auth.currentUser.email,
-      recieverEmail: route.params.data.email,
-    };
+    if (input) {
+      const message = {
+        timestamp: serverTimestamp(),
+        message: input,
+        displayName: auth.currentUser.displayName,
+        photoURL: auth.currentUser.photoURL,
+        senderEmail: auth.currentUser.email,
+        recieverEmail: route.params.data.email,
+        isRead: false,
+      };
 
-    addDoc(collection(db, "privateMessages"), message);
+      addDoc(collection(db, "privateMessages"), message);
 
-    setInput("");
+      setInput("");
+    }
     // const notifData = {
     //   subID: message.recieverEmail,
     //   appId: 5714,
@@ -207,11 +210,13 @@ const PrivateChat = ({ navigation, route }) => {
               <Ionicons name="chatbubbles-outline" size={20} color="#001e2b" />
 
               <TextInput
+                style={styles.textInput}
+                placeholder="Send a message..."
                 value={input}
                 onChangeText={(text) => setInput(text)}
                 onSubmitEditing={sendMessage}
-                style={styles.textInput}
-                placeholder="Send a message..."
+                onBlur={() => console.log("not")}
+                onFocus={() => console.log("focus")}
               />
             </View>
             <TouchableOpacity
@@ -299,6 +304,11 @@ const styles = StyleSheet.create({
     width: "100%",
     padding: 15,
   },
+  inputActions: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    width: "30%",
+  },
   input: {
     flexDirection: "row",
     alignItems: "center",
@@ -313,7 +323,7 @@ const styles = StyleSheet.create({
   textInput: {
     color: "#001e2b",
     marginLeft: 5,
-    width: "90%",
+    width: "65%",
     fontSize: 12,
   },
   sendBtn: {

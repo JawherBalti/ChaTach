@@ -62,14 +62,19 @@ const PublicChat = ({ navigation, route }) => {
   const sendMessage = async () => {
     Keyboard.dismiss();
 
-    addDoc(collection(doc(db, "publicMessages", route.params.id), "messages"), {
-      timestamp: serverTimestamp(),
-      message: input,
-      displayName: auth.currentUser.displayName,
-      email: auth.currentUser.email,
-      photoURL: auth.currentUser.photoURL,
-    });
-    setInput("");
+    if (input) {
+      addDoc(
+        collection(doc(db, "publicMessages", route.params.id), "messages"),
+        {
+          timestamp: serverTimestamp(),
+          message: input,
+          displayName: auth.currentUser.displayName,
+          email: auth.currentUser.email,
+          photoURL: auth.currentUser.photoURL,
+        }
+      );
+      setInput("");
+    }
   };
 
   return (
