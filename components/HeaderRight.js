@@ -10,13 +10,23 @@ import Spinner from "react-native-loading-spinner-overlay";
 
 const HeaderRight = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isBanned, setIsBanned] = useState(false);
 
   const route = useRoute();
 
   useLayoutEffect(() => {
     getUserBanned();
+    getUserAdmin();
   }, []);
+
+  const getUserAdmin = async () => {
+    if (auth.currentUser) {
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      const userSnap = await getDoc(userRef);
+      setIsAdmin(userSnap.data().isAdmin);
+    }
+  };
 
   const getUserBanned = async () => {
     if (auth.currentUser) {
@@ -55,6 +65,19 @@ const HeaderRight = ({ navigation }) => {
               <Ionicons name="add-circle-outline" size={25} color="#001e2b" />
             </TouchableOpacity>
           ) : null}
+          {route.name === "Home" && isAdmin ? (
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Moderation")}
+              activeOpacity={0.5}
+              style={styles.notification}
+            >
+              <Ionicons
+                name="notifications-outline"
+                size={25}
+                color="#001e2b"
+              />
+            </TouchableOpacity>
+          ) : null}
           <TouchableOpacity
             style={styles.avatar}
             activeOpacity={0.5}
@@ -86,6 +109,9 @@ const styles = StyleSheet.create({
   text: {
     color: "#001e2b",
     marginLeft: 10,
+  },
+  notification: {
+    marginLeft: 15,
   },
   avatar: { marginLeft: 20 },
 });
