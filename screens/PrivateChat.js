@@ -166,21 +166,31 @@ const PrivateChat = ({ navigation, route }) => {
                     <Text style={styles.senderText}>
                       {data.item.data.message}
                     </Text>
+
+                    {data.item.data.timestamp ? (
+                      <Text
+                        style={[
+                          styles.timestamp,
+                          { color: "#ffffff", paddingRight: 5 },
+                        ]}
+                      >
+                        {new Date(data.item?.data?.timestamp?.seconds * 1000)
+                          .getHours()
+                          .toString()
+                          .padStart(2, "0") +
+                          ":" +
+                          new Date(data.item?.data?.timestamp?.seconds * 1000)
+                            .getMinutes()
+                            .toString()
+                            .padStart(2, "0")}
+                      </Text>
+                    ) : null}
                   </View>
                   {data.item.data.timestamp ? (
-                    <Text style={styles.timestamp}>
+                    <Text style={styles.date}>
                       {new Date(data.item?.data?.timestamp.seconds * 1000)
                         .toISOString()
-                        .substring(0, 10) + "  "}
-                      {new Date(data.item.data.timestamp.seconds * 1000)
-                        .getHours()
-                        .toString()
-                        .padStart(2, "0") +
-                        ":" +
-                        new Date(data.item.data.timestamp.seconds * 1000)
-                          .getMinutes()
-                          .toString()
-                          .padStart(2, "0")}
+                        .substring(0, 10)}
                     </Text>
                   ) : null}
                 </>
@@ -196,21 +206,25 @@ const PrivateChat = ({ navigation, route }) => {
                     <Text style={styles.recieverText}>
                       {data.item.data.message}
                     </Text>
+                    {data.item.data.timestamp ? (
+                      <Text style={styles.timestamp}>
+                        {new Date(data.item?.data?.timestamp?.seconds * 1000)
+                          .getHours()
+                          .toString()
+                          .padStart(2, "0") +
+                          ":" +
+                          new Date(data.item?.data?.timestamp?.seconds * 1000)
+                            .getMinutes()
+                            .toString()
+                            .padStart(2, "0")}
+                      </Text>
+                    ) : null}
                   </View>
                   {data.item.data.timestamp ? (
-                    <Text style={styles.timestamp}>
+                    <Text style={styles.date}>
                       {new Date(data.item?.data?.timestamp.seconds * 1000)
                         .toISOString()
-                        .substring(0, 10) + "  "}
-                      {new Date(data.item?.data?.timestamp?.seconds * 1000)
-                        .getHours()
-                        .toString()
-                        .padStart(2, "0") +
-                        ":" +
-                        new Date(data.item?.data?.timestamp?.seconds * 1000)
-                          .getMinutes()
-                          .toString()
-                          .padStart(2, "0")}
+                        .substring(0, 10)}
                     </Text>
                   ) : null}
                 </View>
@@ -277,7 +291,10 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   reciever: {
-    padding: 15,
+    paddingBottom: 5,
+    paddingTop: 10,
+    paddingLeft: 10,
+    paddingRight: 25,
     backgroundColor: "#ececec",
     borderRadius: 20,
     margin: 15,
@@ -285,7 +302,10 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   sender: {
-    padding: 15,
+    paddingBottom: 5,
+    paddingTop: 10,
+    paddingLeft: 10,
+    paddingRight: 25,
     backgroundColor: "#164d64",
     alignSelf: "flex-start",
     borderRadius: 20,
@@ -296,10 +316,12 @@ const styles = StyleSheet.create({
   senderText: {
     color: "white",
     fontWeight: "500",
+    marginBottom: 5,
   },
   recieverText: {
     color: "black",
     fontWeight: "500",
+    marginBottom: 5,
   },
   recieverName: {
     fontSize: 10,
@@ -315,11 +337,15 @@ const styles = StyleSheet.create({
     height: 30,
     width: 30,
   },
-  timestamp: {
-    color: "#fff",
+  date: {
+    color: "#ffffff",
+    marginLeft: 20,
     margin: 20,
     marginTop: 0,
     fontSize: 10,
+  },
+  timestamp: {
+    fontSize: 8,
   },
   inputContainer: {
     flexDirection: "row",
