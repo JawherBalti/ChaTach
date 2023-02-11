@@ -47,13 +47,30 @@ const PublicChat = ({ navigation, route }) => {
         orderBy("timestamp", "desc")
       ),
       (snapshot) => {
-        setMessages(
-          snapshot.docs.map((doc) => ({
-            id: doc.id,
-            data: doc.data(),
-          }))
-        );
+        const allMessages = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          data: doc.data(),
+        }));
+        setMessages(allMessages);
         setLoading(false);
+
+        //set last message to read
+        // if (
+        //   allMessages.length > 0 &&
+        //   allMessages?.[0]?.email !== auth?.currentUser?.email &&
+        //   !allMessages?.[0]?.isRead
+        // ) {
+        //   const docRef = doc(
+        //     db,
+        //     "publicMessages",
+        //     route.params.id,
+        //     "messages",
+        //     allMessages[0].id
+        //   );
+        //   updateDoc(docRef, {
+        //     isRead: true,
+        //   });
+        // }
       }
     );
     return unsub;
@@ -103,30 +120,64 @@ const PublicChat = ({ navigation, route }) => {
                     <Text style={styles.senderText}>
                       {data.item.data.message}
                     </Text>
+                    {data.item.data.timestamp ? (
+                      <Text
+                        style={[
+                          styles.timestamp,
+                          { color: "#ffffff", paddingRight: 5 },
+                        ]}
+                      >
+                        {new Date(data.item?.data?.timestamp?.seconds * 1000)
+                          .getHours()
+                          .toString()
+                          .padStart(2, "0") +
+                          ":" +
+                          new Date(data.item?.data?.timestamp?.seconds * 1000)
+                            .getMinutes()
+                            .toString()
+                            .padStart(2, "0")}
+                      </Text>
+                    ) : null}
                   </View>
-                  {data.item.data.timestamp ? (
-                    <Text style={styles.timestamp}>
+
+                  {/* {data.item.data.timestamp ? (
+                      data?.index > 0 &&
+                      new Date(
+                        messages[data?.index - 1]?.data?.timestamp?.seconds * 1000
+                      )
+                        .toISOString()
+                        .substring(0, 10) !==
+                        new Date(
+                          messages[data?.index]?.data?.timestamp?.seconds * 1000
+                        )
+                          .toISOString()
+                          .substring(0, 10) ? (
+                        <Text style={styles.date}>
+                          {new Date(data?.item?.data?.timestamp?.seconds * 1000)
+                            .toISOString()
+                            .substring(0, 10)}
+                        </Text>
+                      ) : data?.index === 0 ? <Text style={styles.date}>
                       {new Date(data.item?.data?.timestamp.seconds * 1000)
                         .toISOString()
-                        .substring(0, 10) + "  "}
-                      {new Date(data.item?.data?.timestamp?.seconds * 1000)
-                        .getHours()
-                        .toString()
-                        .padStart(2, "0") +
-                        ":" +
-                        new Date(data.item?.data?.timestamp?.seconds * 1000)
-                          .getMinutes()
-                          .toString()
-                          .padStart(2, "0")}
+                        .substring(0, 10)}
+                    </Text> : null
+                    ) : null} */}
+
+                  {data.item.data.timestamp ? (
+                    <Text style={styles.date}>
+                      {new Date(data.item?.data?.timestamp.seconds * 1000)
+                        .toISOString()
+                        .substring(0, 10)}
                     </Text>
                   ) : null}
                 </>
               ) : (
                 <View key={data.item.data.id} style={styles.recieverContainer}>
-                  <Text style={styles.recieverName}>
-                    {data.item.data.displayName}
-                  </Text>
                   <View style={styles.reciever}>
+                    <Text style={styles.recieverName}>
+                      {data.item.data.displayName}
+                    </Text>
                     <Avatar
                       rounded
                       size={30}
@@ -136,21 +187,25 @@ const PublicChat = ({ navigation, route }) => {
                     <Text style={styles.recieverText}>
                       {data.item.data.message}
                     </Text>
+                    {data.item.data.timestamp ? (
+                      <Text style={styles.timestamp}>
+                        {new Date(data.item?.data?.timestamp?.seconds * 1000)
+                          .getHours()
+                          .toString()
+                          .padStart(2, "0") +
+                          ":" +
+                          new Date(data.item?.data?.timestamp?.seconds * 1000)
+                            .getMinutes()
+                            .toString()
+                            .padStart(2, "0")}
+                      </Text>
+                    ) : null}
                   </View>
                   {data.item.data.timestamp ? (
-                    <Text style={styles.timestamp}>
+                    <Text style={styles.date}>
                       {new Date(data.item?.data?.timestamp.seconds * 1000)
                         .toISOString()
-                        .substring(0, 10) + "  "}
-                      {new Date(data.item?.data?.timestamp?.seconds * 1000)
-                        .getHours()
-                        .toString()
-                        .padStart(2, "0") +
-                        ":" +
-                        new Date(data.item?.data?.timestamp?.seconds * 1000)
-                          .getMinutes()
-                          .toString()
-                          .padStart(2, "0")}
+                        .substring(0, 10)}
                     </Text>
                   ) : null}
                 </View>
@@ -168,6 +223,17 @@ const PublicChat = ({ navigation, route }) => {
                 style={styles.textInput}
                 placeholder="Send a message..."
               />
+              <View style={styles.inputActions}>
+                <TouchableOpacity>
+                  <Ionicons name="happy-outline" size={20} color="#001e2b" />
+                </TouchableOpacity>
+                <TouchableOpacity>
+                  <Ionicons name="image-outline" size={20} color="#001e2b" />
+                </TouchableOpacity>
+                {/* <TouchableOpacity>
+                  <Ionicons name="flag-outline" size={20} color="#001e2b" />
+                </TouchableOpacity> */}
+              </View>
             </View>
 
             <TouchableOpacity
@@ -205,11 +271,14 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   reciever: {
-    padding: 15,
+    paddingBottom: 10,
+    paddingRight: 10,
+    paddingLeft: 10,
     backgroundColor: "#ececec",
     borderRadius: 20,
     marginRight: 15,
     marginBottom: 20,
+    marginTop: 10,
     maxWidth: "80%",
     position: "relative",
   },
@@ -231,11 +300,10 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   recieverName: {
-    fontSize: 10,
-    color: "#fff",
-    marginRight: 20,
-    marginBottom: 10,
-    marginTop: 10,
+    fontSize: 8,
+    color: "#001e2b",
+    paddingTop: 5,
+    paddingRight: 15,
   },
   avatar: {
     position: "absolute",
@@ -244,18 +312,26 @@ const styles = StyleSheet.create({
     height: 30,
     width: 30,
   },
-  timestamp: {
-    color: "#fff",
+  date: {
+    color: "#ffffff",
     marginLeft: 20,
     margin: 20,
     marginTop: 0,
     fontSize: 10,
+  },
+  timestamp: {
+    fontSize: 8,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
     padding: 15,
+  },
+  inputActions: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    width: "30%",
   },
   input: {
     flexDirection: "row",
@@ -271,7 +347,7 @@ const styles = StyleSheet.create({
   textInput: {
     color: "#001e2b",
     marginLeft: 5,
-    width: "90%",
+    width: "65%",
     fontSize: 12,
   },
   sendBtn: {
