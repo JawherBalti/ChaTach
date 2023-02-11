@@ -16,29 +16,27 @@ const HeaderRight = ({ navigation }) => {
   const route = useRoute();
 
   useLayoutEffect(() => {
-    getUserBanned();
-    getUserAdmin();
+    if (auth.currentUser) {
+      getUserBanned();
+      getUserAdmin();
+    }
   }, []);
 
   const getUserAdmin = async () => {
-    if (auth.currentUser) {
-      const userRef = doc(db, "users", auth.currentUser.uid);
-      const userSnap = await getDoc(userRef);
-      setIsAdmin(userSnap.data().isAdmin);
-    }
+    const userRef = doc(db, "users", auth?.currentUser?.uid);
+    const userSnap = await getDoc(userRef);
+    setIsAdmin(userSnap.data().isAdmin);
   };
 
   const getUserBanned = async () => {
-    if (auth.currentUser) {
-      const userRef = doc(db, "users", auth.currentUser.uid);
-      const userSnap = await getDoc(userRef);
-      setIsBanned(userSnap.data().isBanned);
-    }
+    const userRef = doc(db, "users", auth?.currentUser?.uid);
+    const userSnap = await getDoc(userRef);
+    setIsBanned(userSnap.data().isBanned);
   };
 
   const signOutUser = () => {
     setLoading(true);
-    updateDoc(doc(db, "users", auth.currentUser.uid), {
+    updateDoc(doc(db, "users", auth?.currentUser?.uid), {
       online: false,
     });
     signOut(auth).then(() => {
