@@ -26,6 +26,7 @@ import {
 import HeaderRight from "../components/HeaderRight";
 import HeaderLeft from "../components/HeaderLeft";
 import Spinner from "react-native-loading-spinner-overlay";
+import ReportModal from "../components/ReportModal";
 
 // npx expo install expo-device expo-notifications
 
@@ -33,7 +34,7 @@ const PrivateChat = ({ navigation, route }) => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  const [modalOpened, setModalOpened] = useState(false);
   // const appState = useRef(AppState.currentState);
 
   // const [appStateVisible, setAppStateVisible] = useState(appState.current);
@@ -138,15 +139,21 @@ const PrivateChat = ({ navigation, route }) => {
     //   body: JSON.stringify(notifData),
     // });
   };
+
   return (
     <View style={styles.container}>
       {loading && <Spinner visible={loading} color="#ffffff" />}
-
       <View style={styles.chatHeader}>
         <Text style={styles.headerText}>
           You are chatting with {route.params.data.displayName}
         </Text>
       </View>
+      {modalOpened && (
+        <ReportModal
+          user={route.params.data}
+          changeModalState={setModalOpened}
+        />
+      )}
 
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <>
@@ -154,7 +161,7 @@ const PrivateChat = ({ navigation, route }) => {
             data={messages}
             keyExtractor={(item) => item.data.timestamp}
             renderItem={(data) =>
-              data.item.data.senderEmail === auth.currentUser.email ? (
+              data.item.data.senderEmail === auth?.currentUser?.email ? (
                 <>
                   <View key={data.item.data.timestamp} style={styles.sender}>
                     <Avatar
@@ -241,8 +248,8 @@ const PrivateChat = ({ navigation, route }) => {
                 value={input}
                 onChangeText={(text) => setInput(text)}
                 onSubmitEditing={sendMessage}
-                onBlur={() => console.log("not")}
-                onFocus={() => console.log("focus")}
+                // onBlur={() => console.log("not")}
+                // onFocus={() => console.log("focus")}
               />
               <View style={styles.inputActions}>
                 <TouchableOpacity>
@@ -251,7 +258,7 @@ const PrivateChat = ({ navigation, route }) => {
                 <TouchableOpacity>
                   <Ionicons name="image-outline" size={20} color="#001e2b" />
                 </TouchableOpacity>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => setModalOpened(!modalOpened)}>
                   <Ionicons name="flag-outline" size={20} color="#001e2b" />
                 </TouchableOpacity>
               </View>
@@ -276,6 +283,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#001E2B",
+    zIndex: 50,
   },
   chatHeader: {
     justifyContent: "center",
