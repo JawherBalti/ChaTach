@@ -10,7 +10,15 @@ import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { Divider } from "react-native-elements";
 import { Ionicons } from "@expo/vector-icons";
 import { auth, db } from "../firebase";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+} from "firebase/firestore";
 import { useIsFocused } from "@react-navigation/native";
 import UsersList from "../components/UsersList";
 import RoomsList from "../components/RoomsList";
@@ -34,7 +42,7 @@ const Home = ({ navigation }) => {
   const usersData = [];
 
   useEffect(() => {
-    if (isFocused) {
+    if (isFocused && auth.currentUser) {
       getRooms();
       getUserBanned();
     }
@@ -56,22 +64,23 @@ const Home = ({ navigation }) => {
   }, [navigation]);
 
   const getUserBanned = async () => {
-    const userRef = doc(db, "users", auth?.currentUser?.uid);
-    const userSnap = await getDoc(userRef);
-    setIsBanned(userSnap.data().isBanned);
+    if (auth.currentUser) {
+      const userRef = doc(db, "users", auth?.currentUser?.uid);
+      const userSnap = await getDoc(userRef);
+      setIsBanned(userSnap.data().isBanned);
+    }
   };
 
-  const getUsers = async () => {
+  const getUsers = () => {
     setIsLoading(true);
-    const unsubscribe = await getDocs(collection(db, "users"));
-    unsubscribe.forEach((doc) => {
-      usersData.push({
+    onSnapshot(query(collection(db, "users")), (snapshot) => {
+      const allUsers = snapshot.docs.map((doc) => ({
         id: doc.id,
         data: doc.data(),
-      });
+      }));
+      setIsLoading(false);
+      setUsers(allUsers);
     });
-    setIsLoading(false);
-    setUsers(usersData);
   };
 
   const getRooms = async () => {
@@ -89,7 +98,7 @@ const Home = ({ navigation }) => {
 
   const filteredUsers = useMemo(() => {
     return users
-      .filter((user) => user.data.email !== auth.currentUser.email)
+      .filter((user) => user.data.email !== auth?.currentUser?.email)
       .filter((user) => {
         return user.data.displayName
           .toLowerCase()

@@ -1,8 +1,8 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Text } from "react-native";
 import React, { useEffect, useState } from "react";
 import { ListItem, Avatar } from "react-native-elements";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
 
 const RoomsList = ({ id, data, enterChat }) => {
   const [chatMessages, setChatMessages] = useState([]);
@@ -51,6 +51,11 @@ const RoomsList = ({ id, data, enterChat }) => {
           </ListItem.Subtitle>
         )}
       </ListItem.Content>
+      {/* {chatMessages.length > 0 &&
+      chatMessages?.[0]?.email !== auth.currentUser.email &&
+      !chatMessages?.[0]?.isRead ? (
+        <Text style={styles.msgNotification}>New</Text>
+      ) : null} */}
     </ListItem>
   );
 };
@@ -61,4 +66,13 @@ const styles = StyleSheet.create({
   roomsList: { backgroundColor: "#001E2B", padding: 10 },
   roomName: { fontWeight: "800", color: "#ffffff" },
   lastMsg: { fontSize: 10, color: "#c7c7c7", width: "100%" },
+  // msgNotification: {
+  //   color: "#ffffff",
+  //   borderRadius: 8,
+  //   backgroundColor: "#dc3545",
+  //   padding: 3,
+  //   fontSize: 10,
+  //   borderWidth: 1,
+  //   borderColor: "#ffffff",
+  // },
 });
