@@ -158,6 +158,7 @@ const Login = ({ navigation }) => {
                   online: true,
                   isBanned: false,
                   blockedBy: [],
+                  unbanRequestSent: false,
                   isAdmin: usersCount > 0 ? false : true,
                 });
                 updateProfile(authUser.user, {
@@ -221,6 +222,7 @@ const Login = ({ navigation }) => {
                   online: true,
                   isBanned: false,
                   blockedBy: [],
+                  unbanRequestSent: false,
                   isAdmin: usersCount > 0 ? false : true,
                 });
                 updateProfile(authUser.user, {

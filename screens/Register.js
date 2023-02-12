@@ -110,6 +110,7 @@ const Register = ({ navigation }) => {
           online: true,
           isBanned: false,
           blockedBy: [],
+          unbanRequestSent: false,
           isAdmin: usersCount > 0 ? false : true,
         });
         updateProfile(authUser.user, {
