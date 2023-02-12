@@ -14,12 +14,24 @@ import { Ionicons } from "@expo/vector-icons";
 import { Divider } from "react-native-elements";
 import ReportsList from "../components/ReportsList";
 import RequestsList from "../components/RequestsList";
+import {
+  collection,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+} from "firebase/firestore";
+import { auth, db } from "../firebase";
+import { useEffect } from "react";
+import { useIsFocused } from "@react-navigation/native";
 
 const Moderation = ({ navigation }) => {
   const [isReports, setIsReports] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [reports, setReports] = useState([]);
   const [unbanRequests, setUnbanRequests] = useState([]);
+
+  const isFocused = useIsFocused();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -32,7 +44,42 @@ const Moderation = ({ navigation }) => {
     });
   }, [navigation]);
 
-  const getUnbanRequests = () => {};
+  useEffect(() => {
+    if (isFocused && auth.currentUser) {
+      getReports();
+    }
+  }, [isFocused]);
+
+  const getReports = () => {
+    setIsLoading(true);
+    onSnapshot(
+      query(collection(db, "reports"), orderBy("timestamp", "asc")),
+      (snapshot) => {
+        const allReports = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          data: doc.data(),
+        }));
+        setIsLoading(false);
+        setReports(allReports);
+      }
+    );
+  };
+
+  const getUnbanRequests = () => {
+    setIsLoading(true);
+    onSnapshot(
+      query(collection(db, "requests"), orderBy("timestamp", "asc")),
+      (snapshot) => {
+        const allRequests = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          data: doc.data(),
+        }));
+        console.log(allRequests);
+        setIsLoading(false);
+        setUnbanRequests(allRequests);
+      }
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -104,9 +151,9 @@ const Moderation = ({ navigation }) => {
           keyExtractor={(item) => item.id}
           renderItem={(data) => (
             <ReportsList
-            // id={data.item.id}
-            // data={data.item.data}
-            // enterChat={enterChat}
+              id={data.item.id}
+              data={data.item.data}
+              // enterChat={enterChat}
             />
           )}
         />
@@ -117,9 +164,9 @@ const Moderation = ({ navigation }) => {
           keyExtractor={(item) => item.id}
           renderItem={(data) => (
             <RequestsList
-            // id={data.item.id}
-            // data={data.item.data}
-            // enterPrivateChat={enterPrivateChat}
+              id={data.item.id}
+              data={data.item.data}
+              // enterPrivateChat={enterPrivateChat}
             />
           )}
         />

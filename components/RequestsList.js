@@ -1,12 +1,60 @@
-import { View, Text } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import React from "react";
+import { Avatar, ListItem } from "react-native-elements";
 
-const RequestsList = () => {
+const RequestsList = ({ id, data }) => {
   return (
-    <View>
-      <Text>RequestsList</Text>
-    </View>
+    <ListItem
+      // onPress={() => enterChat(id, data.chatName)}
+      key={id}
+      containerStyle={styles.requestsList}
+      bottomDivider
+    >
+      <Avatar
+        rounded
+        source={{
+          uri:
+            data.photoUrl ||
+            "https://www.pngmart.com/files/22/User-Avatar-Profile-PNG-Isolated-Transparent-HD-Photo.png",
+        }}
+      />
+      <ListItem.Content>
+        <ListItem.Title style={styles.requesterName}>
+          {data.displayName}
+        </ListItem.Title>
+        <ListItem.Subtitle
+          style={styles.request}
+          ellipsizeMode="tail"
+          numberOfLines={1}
+        >
+          {data.request}
+        </ListItem.Subtitle>
+      </ListItem.Content>
+      <Text style={styles.timestamp}>
+        {new Date(data.timestamp.seconds * 1000).toISOString().substring(0, 10)}
+      </Text>
+    </ListItem>
   );
 };
 
 export default RequestsList;
+
+const styles = StyleSheet.create({
+  requestsList: {
+    backgroundColor: "#001E2B",
+    padding: 10,
+  },
+  requesterName: {
+    fontWeight: "800",
+    color: "#ffffff",
+  },
+  request: {
+    fontSize: 10,
+    color: "#c7c7c7",
+    width: "100%",
+  },
+  timestamp: {
+    color: "#ffffff",
+    fontSize: 10,
+  },
+});
