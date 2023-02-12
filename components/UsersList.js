@@ -30,10 +30,10 @@ const UsersList = ({ id, data, enterPrivateChat, allUsers }) => {
             }))
             .filter(
               (message) =>
-                (message.data.senderEmail === auth.currentUser.email &&
+                (message.data.senderEmail === auth?.currentUser?.email &&
                   message.data.recieverEmail === data.email) ||
                 (message.data.senderEmail === data.email &&
-                  message.data.recieverEmail === auth.currentUser.email)
+                  message.data.recieverEmail === auth?.currentUser?.email)
             )
         );
       }
@@ -42,11 +42,13 @@ const UsersList = ({ id, data, enterPrivateChat, allUsers }) => {
   }, []);
 
   useEffect(() => {
-    getUserAdmin();
+    if (auth?.currentUser) {
+      getUserAdmin();
+    }
   }, []);
 
   const getUserAdmin = async () => {
-    const userRef = doc(db, "users", auth.currentUser.uid);
+    const userRef = doc(db, "users", auth?.currentUser?.uid);
     const userSnap = await getDoc(userRef);
     setIsAdmin(userSnap.data().isAdmin);
   };
@@ -60,6 +62,7 @@ const UsersList = ({ id, data, enterPrivateChat, allUsers }) => {
   const unbanUser = () => {
     updateDoc(doc(db, "users", data.id), {
       isBanned: false,
+      unbanRequestSent: false,
     });
     setIsBanned(false);
   };
@@ -107,7 +110,7 @@ const UsersList = ({ id, data, enterPrivateChat, allUsers }) => {
         )}
       </ListItem.Content>
       {chatMessages.length > 0 &&
-      chatMessages?.[0]?.data.senderEmail !== auth.currentUser.email &&
+      chatMessages?.[0]?.data.senderEmail !== auth?.currentUser?.email &&
       !chatMessages?.[0]?.data.isRead ? (
         <Text style={styles.msgNotification}>New</Text>
       ) : null}
