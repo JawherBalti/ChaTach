@@ -8,6 +8,7 @@ import PrivateChat from "./screens/PrivateChat";
 import PublicChat from "./screens/PublicChat";
 import CreateRoom from "./screens/CreateRoom";
 import Moderation from "./screens/Moderation";
+import ManageUser from "./screens/ManageUser";
 
 const Stack = createNativeStackNavigator();
 
@@ -32,6 +33,7 @@ export default function App() {
         <Stack.Screen name="PublicChat" component={PublicChat} />
         <Stack.Screen name="PrivateChat" component={PrivateChat} />
         <Stack.Screen name="Moderation" component={Moderation} />
+        <Stack.Screen name="ManageUser" component={ManageUser} />
       </Stack.Navigator>
       <StatusBar style="light" />
     </NavigationContainer>

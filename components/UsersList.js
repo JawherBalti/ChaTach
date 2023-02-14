@@ -13,7 +13,7 @@ import {
 import { auth, db } from "../firebase";
 import { Ionicons } from "@expo/vector-icons";
 
-const UsersList = ({ id, data, enterPrivateChat, allUsers }) => {
+const UsersList = ({ id, data, enterPrivateChat, allUsers, navigation }) => {
   const [chatMessages, setChatMessages] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isBanned, setIsBanned] = useState(data.isBanned);
@@ -53,18 +53,11 @@ const UsersList = ({ id, data, enterPrivateChat, allUsers }) => {
     setIsAdmin(userSnap.data().isAdmin);
   };
 
-  const banUser = () => {
-    updateDoc(doc(db, "users", data.id), {
-      isBanned: true,
+  const manageUser = () => {
+    navigation.navigate("ManageUser", {
+      id: id,
+      data: data,
     });
-    setIsBanned(true);
-  };
-  const unbanUser = () => {
-    updateDoc(doc(db, "users", data.id), {
-      isBanned: false,
-      unbanRequestSent: false,
-    });
-    setIsBanned(false);
   };
 
   return (
@@ -114,7 +107,22 @@ const UsersList = ({ id, data, enterPrivateChat, allUsers }) => {
       !chatMessages?.[0]?.data.isRead ? (
         <Text style={styles.msgNotification}>New</Text>
       ) : null}
-      {isAdmin ? (
+      {isAdmin && (
+        <TouchableOpacity
+          style={[
+            styles.btn,
+            {
+              backgroundColor: "#00ed64",
+            },
+          ]}
+          onPress={manageUser}
+        >
+          <Ionicons name="settings" size={17} color="#001e2b" />
+
+          <Text style={styles.btnText}>Manage</Text>
+        </TouchableOpacity>
+      )}
+      {/* {isAdmin ? (
         !isBanned ? (
           <TouchableOpacity
             style={[
@@ -144,7 +152,7 @@ const UsersList = ({ id, data, enterPrivateChat, allUsers }) => {
             <Text style={styles.btnText}>Unban</Text>
           </TouchableOpacity>
         )
-      ) : null}
+      ) : null} */}
     </ListItem>
   );
 };
@@ -182,14 +190,23 @@ const styles = StyleSheet.create({
     borderColor: "#ffffff",
     padding: 8,
     borderRadius: 5,
-    width: 75,
+    width: "30%",
     textAlign: "center",
   },
   btnText: {
     color: "#001e2b",
   },
-
-  usersList: { backgroundColor: "#001E2B", padding: 10 },
-  userName: { fontWeight: "800", color: "#ffffff" },
-  lastMsg: { fontSize: 10, color: "#c7c7c7", width: "100%" },
+  usersList: {
+    backgroundColor: "#001E2B",
+    padding: 10,
+  },
+  userName: {
+    fontWeight: "800",
+    color: "#ffffff",
+  },
+  lastMsg: {
+    fontSize: 10,
+    color: "#c7c7c7",
+    width: "100%",
+  },
 });
