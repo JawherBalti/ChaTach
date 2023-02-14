@@ -8,8 +8,8 @@
         }
       ]
     ],
-    "name": "chAttach",
-    "slug": "chAttach",
+    "name": "ChaTach",
+    "slug": "ChaTach",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -33,7 +33,7 @@
     "android": {
       "package": "com.expo.chatach",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#FFFFFF"
       },
       "permissions": [
