@@ -8,8 +8,8 @@
         }
       ]
     ],
-    "name": "ChaTach",
-    "slug": "ChaTach",
+    "name": "chAttach",
+    "slug": "chAttach",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
