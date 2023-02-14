@@ -219,6 +219,7 @@ const Home = ({ navigation }) => {
                   id={data.item.id}
                   data={data.item.data}
                   enterPrivateChat={enterPrivateChat}
+                  navigation={navigation}
                 />
               )}
             />
