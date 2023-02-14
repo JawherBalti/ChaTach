@@ -5,6 +5,7 @@ import {
   TextInput,
   Dimensions,
   Image,
+  KeyboardAvoidingView,
 } from "react-native";
 import React, { useLayoutEffect, useState } from "react";
 import { Text } from "react-native-elements";
@@ -123,24 +124,24 @@ const Register = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView behavior="position" style={styles.container}>
       {loading && <Spinner visible={loading} color="#ffffff" />}
-      <Text style={styles.title}>Register</Text>
+      <View style={{ alignItems: "center" }}>
+        <Text style={styles.title}>Register</Text>
+        <View style={styles.avatar}>
+          <Image
+            source={{
+              uri:
+                imagePreview ||
+                "https://d2cbg94ubxgsnp.cloudfront.net/Pictures/2000xAny/9/9/2/512992_shutterstock_715962319converted_749269.png",
+            }}
+            style={styles.preview}
+          />
 
-      {/* <Button title="Pick an image from camera roll" onPress={pickImage} /> */}
-      <View style={styles.avatar}>
-        <Image
-          source={{
-            uri:
-              imagePreview ||
-              "https://d2cbg94ubxgsnp.cloudfront.net/Pictures/2000xAny/9/9/2/512992_shutterstock_715962319converted_749269.png",
-          }}
-          style={styles.preview}
-        />
-
-        <TouchableOpacity style={styles.selectAvatar} onPress={pickImage}>
-          <Text style={styles.plus}>+</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.selectAvatar} onPress={pickImage}>
+            <Text style={styles.plus}>+</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.inputContainer}>
@@ -191,40 +192,44 @@ const Register = ({ navigation }) => {
           </View>
         </View>
       </View>
-      <TouchableOpacity style={styles.button} onPress={register}>
-        <Ionicons name="person-add" size={20} color="#001e2b" />
-        <Text style={styles.btnText}>Register</Text>
-      </TouchableOpacity>
-
-      <View style={styles.footer}>
-        <Text style={styles.label}>Don't have an account? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-          <Text style={styles.link}>Login</Text>
+      <View style={{ alignItems: "center" }}>
+        <TouchableOpacity style={styles.button} onPress={register}>
+          <Ionicons name="person-add" size={20} color="#001e2b" />
+          <Text style={styles.btnText}>Register</Text>
         </TouchableOpacity>
+
+        <View style={styles.footer}>
+          <Text style={styles.label}>Don't have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+            <Text style={styles.link}>Login</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      <View style={{ height: 100 }} />
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    height: Dimensions.get("window").height,
+    flex: 1,
     alignItems: "center",
-    justifyContent: "space-evenly",
+    justifyContent: "space-between",
     backgroundColor: "#001E2B",
   },
   title: {
     color: "#ffffff",
     fontWeight: "bold",
     fontSize: 25,
+    marginBottom: 30,
+    marginTop: 20,
   },
   avatar: {
     position: "relative",
+    marginBottom: 20,
   },
   preview: {
-    width: 60,
-    height: 60,
+    width: 70,
+    height: 70,
     borderRadius: 50,
   },
   selectAvatar: {
@@ -233,8 +238,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#00ed64",
     borderRadius: 50,
     width: 20,
-    top: "70%",
-    left: "13%",
+    top: "75%",
+    left: "16%",
   },
   plus: {
     color: "#001E2B",
@@ -264,8 +269,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    width: "80%",
+    width: "100%",
     padding: 10,
+    marginTop: 20,
     backgroundColor: "#00ed64",
     borderColor: "#fff",
     borderWidth: 1,
@@ -276,6 +282,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: "row",
+    marginTop: 20,
   },
   link: {
     color: "#1877f2",
