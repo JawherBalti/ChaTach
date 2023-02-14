@@ -32,7 +32,7 @@ const RoomsList = ({ id, data, enterChat }) => {
         source={{
           uri:
             chatMessages[0]?.photoURL ||
-            "https://www.pngmart.com/files/22/User-Avatar-Profile-PNG-Isolated-Transparent-HD-Photo.png",
+            "https://icon-library.com/images/no-user-image-icon/no-user-image-icon-27.jpg",
         }}
       />
       <ListItem.Content>

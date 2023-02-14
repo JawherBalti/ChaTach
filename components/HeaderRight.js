@@ -63,7 +63,7 @@ const HeaderRight = ({ navigation }) => {
               <Ionicons name="add-circle-outline" size={25} color="#001e2b" />
             </TouchableOpacity>
           ) : null}
-          {route.name === "Home" && isAdmin ? (
+          {isAdmin ? (
             <TouchableOpacity
               onPress={() => navigation.navigate("Moderation")}
               activeOpacity={0.5}

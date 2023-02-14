@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React from "react";
 import { StatusBar } from "expo-status-bar";
 import { auth } from "../firebase";
@@ -9,10 +9,22 @@ const HeaderLeft = ({ navigation }) => {
       <StatusBar style="dark" />
       {auth?.currentUser ? (
         <TouchableOpacity onPress={() => navigation.navigate("Home")}>
-          <Text style={styles.text}>ChaTach</Text>
+          <Image
+            style={{
+              width: 100,
+              height: 30,
+            }}
+            source={require("../assets/logo.png")}
+          />
         </TouchableOpacity>
       ) : (
-        <Text style={styles.text}>ChaTach</Text>
+        <Image
+          style={{
+            width: 100,
+            height: 30,
+          }}
+          source={require("../assets/logo.png")}
+        />
       )}
     </View>
   );
