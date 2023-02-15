@@ -1,4 +1,4 @@
-import { StyleSheet, Text } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import React, { useEffect, useState } from "react";
 import { ListItem, Avatar } from "react-native-elements";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
@@ -38,13 +38,31 @@ const RoomsList = ({ id, data, enterChat }) => {
       <ListItem.Content>
         <ListItem.Title style={styles.roomName}>{data.chatName}</ListItem.Title>
         {chatMessages.length > 0 ? (
-          <ListItem.Subtitle
-            style={styles.lastMsg}
-            ellipsizeMode="tail"
-            numberOfLines={1}
-          >
-            {chatMessages?.[0]?.displayName} : {chatMessages?.[0]?.message}
-          </ListItem.Subtitle>
+          chatMessages?.[0].message.slice(-4) === ".png" ? (
+            <View style={styles.lastMsgContainer}>
+              <ListItem.Subtitle
+                style={styles.lastMsg}
+                ellipsizeMode="tail"
+                numberOfLines={1}
+              >
+                {chatMessages?.[0]?.displayName} :{" "}
+              </ListItem.Subtitle>
+              <Image
+                source={{
+                  uri: chatMessages?.[0]?.message,
+                }}
+                style={styles.lastMsgPreview}
+              />
+            </View>
+          ) : (
+            <ListItem.Subtitle
+              style={styles.lastMsg}
+              ellipsizeMode="tail"
+              numberOfLines={1}
+            >
+              {chatMessages?.[0]?.displayName} : {chatMessages?.[0]?.message}
+            </ListItem.Subtitle>
+          )
         ) : (
           <ListItem.Subtitle style={styles.lastMsg}>
             No messages in this room
@@ -63,9 +81,28 @@ const RoomsList = ({ id, data, enterChat }) => {
 export default RoomsList;
 
 const styles = StyleSheet.create({
-  roomsList: { backgroundColor: "#001E2B", padding: 10 },
-  roomName: { fontWeight: "800", color: "#ffffff" },
-  lastMsg: { fontSize: 10, color: "#c7c7c7", width: "100%" },
+  roomsList: {
+    backgroundColor: "#001E2B",
+    padding: 10,
+  },
+  roomName: {
+    fontWeight: "800",
+    color: "#ffffff",
+  },
+  lastMsgContainer: {
+    flexDirection: "row",
+    width: "20%",
+  },
+  lastMsgPreview: {
+    width: 25,
+    height: 15,
+    borderRadius: 5,
+  },
+  lastMsg: {
+    fontSize: 10,
+    color: "#c7c7c7",
+    width: "100%",
+  },
   // msgNotification: {
   //   color: "#ffffff",
   //   borderRadius: 8,

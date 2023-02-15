@@ -8,6 +8,7 @@ import {
   View,
   FlatList,
   AppState,
+  Image,
 } from "react-native";
 import React, { useLayoutEffect, useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -30,6 +31,7 @@ import ReportModal from "../components/ReportModal";
 import BlockModal from "../components/BlockModal";
 import Spinner from "react-native-loading-spinner-overlay";
 import EmojiSelector, { Categories } from "react-native-emoji-selector";
+import * as ImagePicker from "expo-image-picker";
 
 // npx expo install expo-device expo-notifications
 
@@ -158,6 +160,62 @@ const PrivateChat = ({ navigation, route }) => {
     // });
   };
 
+  const pickImage = async () => {
+    // No permissions request is necessary for launching the image library
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted) {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        aspect: [4, 3],
+        quality: 1,
+        base64: true,
+        allowsEditing: true,
+      });
+
+      if (!result.canceled) {
+        let imageObj = {
+          uri: result.assets[0].uri,
+          type: `test/${result.assets[0].uri.split(".")[1]}`,
+          name: `test.${result.assets[0].uri.split(".")[1]}`,
+        };
+        uploadImage(imageObj);
+      }
+    } else {
+      alert("Access to photos refused!");
+    }
+  };
+
+  const uploadImage = async (image) => {
+    const data = new FormData();
+    data.append("file", image);
+    data.append("upload_preset", "eiqxfhzq");
+    data.append("cloud_name", "dv1lhvgjr");
+    try {
+      let res = await fetch(
+        "https://api.cloudinary.com/v1_1/dv1lhvgjr/image/upload",
+        {
+          method: "post",
+          body: data,
+        }
+      );
+      const urlData = await res.json();
+      const message = {
+        timestamp: serverTimestamp(),
+        message: urlData.url,
+        displayName: auth.currentUser.displayName,
+        photoURL: auth.currentUser.photoURL,
+        senderEmail: auth.currentUser.email,
+        recieverEmail: route.params.data.email,
+        isRead: false,
+      };
+      addDoc(collection(db, "privateMessages"), message);
+      return urlData.url;
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {loading && <Spinner visible={loading} color="#ffffff" />}
@@ -214,9 +272,18 @@ const PrivateChat = ({ navigation, route }) => {
                       style={styles.avatar}
                       source={{ uri: data.item.data.photoURL }}
                     />
-                    <Text style={styles.senderText}>
-                      {data.item.data.message}
-                    </Text>
+                    {data.item.data.message.slice(-4) === ".png" ? (
+                      <Image
+                        style={styles.imageMsg}
+                        source={{
+                          uri: data.item.data.message,
+                        }}
+                      />
+                    ) : (
+                      <Text style={styles.senderText}>
+                        {data.item.data.message}
+                      </Text>
+                    )}
 
                     {data.item.data.timestamp ? (
                       <Text
@@ -254,9 +321,19 @@ const PrivateChat = ({ navigation, route }) => {
                       style={styles.avatar}
                       source={{ uri: data.item.data.photoURL }}
                     />
-                    <Text style={styles.recieverText}>
-                      {data.item.data.message}
-                    </Text>
+                    {data.item.data.message.slice(-4) === ".png" ? (
+                      <Image
+                        style={styles.imageMsg}
+                        source={{
+                          uri: data.item.data.message,
+                        }}
+                      />
+                    ) : (
+                      <Text style={styles.recieverText}>
+                        {data.item.data.message}
+                      </Text>
+                    )}
+
                     {data.item.data.timestamp ? (
                       <Text style={styles.timestamp}>
                         {new Date(data.item?.data?.timestamp?.seconds * 1000)
@@ -308,7 +385,7 @@ const PrivateChat = ({ navigation, route }) => {
                   <TouchableOpacity onPress={() => setShowEmojis(!showEmojis)}>
                     <Ionicons name="happy-outline" size={20} color="#001e2b" />
                   </TouchableOpacity>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={pickImage}>
                     <Ionicons name="image-outline" size={20} color="#001e2b" />
                   </TouchableOpacity>
                 </View>
@@ -398,6 +475,12 @@ const styles = StyleSheet.create({
     margin: 15,
     maxWidth: "80%",
     position: "relative",
+  },
+  imageMsg: {
+    width: 200,
+    height: 150,
+    borderRadius: 15,
+    margin: 5,
   },
   senderText: {
     color: "white",

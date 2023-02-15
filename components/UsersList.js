@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useLayoutEffect, useState, useEffect } from "react";
 import { Avatar, ListItem } from "react-native-elements";
 import {
@@ -88,14 +88,32 @@ const UsersList = ({ id, data, enterPrivateChat, allUsers, navigation }) => {
           {data.displayName}
         </ListItem.Title>
         {chatMessages.length > 0 ? (
-          <ListItem.Subtitle
-            style={styles.lastMsg}
-            ellipsizeMode="tail"
-            numberOfLines={1}
-          >
-            {chatMessages?.[0]?.data.displayName} :{" "}
-            {chatMessages?.[0]?.data.message}
-          </ListItem.Subtitle>
+          chatMessages?.[0].data.message.slice(-4) === ".png" ? (
+            <View style={styles.lastMsgContainer}>
+              <ListItem.Subtitle
+                style={styles.lastMsg}
+                ellipsizeMode="tail"
+                numberOfLines={1}
+              >
+                {chatMessages?.[0]?.data.displayName} :{" "}
+              </ListItem.Subtitle>
+              <Image
+                source={{
+                  uri: chatMessages?.[0]?.data.message,
+                }}
+                style={styles.lastMsgPreview}
+              />
+            </View>
+          ) : (
+            <ListItem.Subtitle
+              style={styles.lastMsg}
+              ellipsizeMode="tail"
+              numberOfLines={1}
+            >
+              {chatMessages?.[0]?.data.displayName} :{" "}
+              {chatMessages?.[0]?.data.message}
+            </ListItem.Subtitle>
+          )
         ) : (
           <ListItem.Subtitle style={styles.lastMsg}>
             No messages with this user
@@ -203,6 +221,15 @@ const styles = StyleSheet.create({
   userName: {
     fontWeight: "800",
     color: "#ffffff",
+  },
+  lastMsgContainer: {
+    flexDirection: "row",
+    width: "35%",
+  },
+  lastMsgPreview: {
+    width: 25,
+    height: 15,
+    borderRadius: 5,
   },
   lastMsg: {
     fontSize: 10,
