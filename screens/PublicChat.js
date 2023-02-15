@@ -9,7 +9,7 @@ import {
   View,
   Image,
 } from "react-native";
-import React, { useLayoutEffect, useState } from "react";
+import React, { useLayoutEffect, useState, useEffect } from "react";
 import { Avatar } from "react-native-elements";
 import { Ionicons } from "@expo/vector-icons";
 import { db, auth } from "../firebase";
@@ -17,22 +17,26 @@ import {
   addDoc,
   collection,
   doc,
+  getDoc,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
 } from "firebase/firestore";
-import HeaderRight from "../components/HeaderRight";
-import HeaderLeft from "../components/HeaderLeft";
 import Spinner from "react-native-loading-spinner-overlay";
 import EmojiSelector, { Categories } from "react-native-emoji-selector";
 import * as ImagePicker from "expo-image-picker";
+import HeaderRight from "../components/HeaderRight";
+import HeaderLeft from "../components/HeaderLeft";
+import DeleteModal from "../components/DeleteModal";
 
 const PublicChat = ({ navigation, route }) => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showEmojis, setShowEmojis] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [deleteModalOpened, setDeleteModalOpened] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -79,6 +83,18 @@ const PublicChat = ({ navigation, route }) => {
     );
     return unsub;
   }, []);
+
+  useEffect(() => {
+    if (auth?.currentUser) {
+      getUserAdmin();
+    }
+  }, []);
+
+  const getUserAdmin = async () => {
+    const userRef = doc(db, "users", auth?.currentUser?.uid);
+    const userSnap = await getDoc(userRef);
+    setIsAdmin(userSnap.data().isAdmin);
+  };
 
   const sendMessage = async () => {
     Keyboard.dismiss();
@@ -162,7 +178,28 @@ const PublicChat = ({ navigation, route }) => {
         <Text style={styles.headerText}>
           welcome to {route.params.chatName}
         </Text>
+        {isAdmin && (
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              onPress={() => setDeleteModalOpened(!deleteModalOpened)}
+            >
+              <Ionicons
+                name="remove-circle-outline"
+                size={20}
+                color="#001e2b"
+              />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
+
+      {deleteModalOpened && (
+        <DeleteModal
+          room={route.params}
+          changeModalState={setDeleteModalOpened}
+          navigation={navigation}
+        />
+      )}
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <>
           <FlatList
@@ -356,7 +393,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#001E2B",
   },
   chatHeader: {
-    justifyContent: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     backgroundColor: "#ffffff",
     height: "10%",
     padding: 15,
