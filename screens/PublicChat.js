@@ -24,11 +24,13 @@ import {
 import HeaderRight from "../components/HeaderRight";
 import HeaderLeft from "../components/HeaderLeft";
 import Spinner from "react-native-loading-spinner-overlay";
+import EmojiSelector, { Categories } from "react-native-emoji-selector";
 
 const PublicChat = ({ navigation, route }) => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showEmojis, setShowEmojis] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -224,7 +226,7 @@ const PublicChat = ({ navigation, route }) => {
                 placeholder="Send a message..."
               />
               <View style={styles.inputActions}>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowEmojis(!showEmojis)}>
                   <Ionicons name="happy-outline" size={20} color="#001e2b" />
                 </TouchableOpacity>
                 <TouchableOpacity>
@@ -246,6 +248,25 @@ const PublicChat = ({ navigation, route }) => {
           </View>
         </>
       </TouchableWithoutFeedback>
+      {showEmojis && (
+        <View
+          style={{
+            padding: 30,
+            width: "100%",
+            height: "60%",
+            backgroundColor: "#ececec",
+            borderRadius: 20,
+          }}
+        >
+          <EmojiSelector
+            onEmojiSelected={(emoji) => setInput((prev) => prev + emoji)}
+            category={Categories.emotion}
+            showTabs={false}
+            showSectionTitles={false}
+            showSearchBar={false}
+          />
+        </View>
+      )}
     </View>
   );
 };

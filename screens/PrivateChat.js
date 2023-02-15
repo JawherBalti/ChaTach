@@ -9,14 +9,15 @@ import {
   FlatList,
   AppState,
 } from "react-native";
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { Avatar } from "react-native-elements";
+import { Avatar, ListItem } from "react-native-elements";
 import { db, auth } from "../firebase";
 import {
   addDoc,
   collection,
   doc,
+  getDoc,
   onSnapshot,
   orderBy,
   query,
@@ -25,8 +26,10 @@ import {
 } from "firebase/firestore";
 import HeaderRight from "../components/HeaderRight";
 import HeaderLeft from "../components/HeaderLeft";
-import Spinner from "react-native-loading-spinner-overlay";
 import ReportModal from "../components/ReportModal";
+import BlockModal from "../components/BlockModal";
+import Spinner from "react-native-loading-spinner-overlay";
+import EmojiSelector, { Categories } from "react-native-emoji-selector";
 
 // npx expo install expo-device expo-notifications
 
@@ -34,7 +37,10 @@ const PrivateChat = ({ navigation, route }) => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [modalOpened, setModalOpened] = useState(false);
+  const [showEmojis, setShowEmojis] = useState(false);
+  const [reportModalOpened, setReportModalOpened] = useState(false);
+  const [blockModalOpened, setBlockModalOpened] = useState(false);
+  const [blockedBy, setBlockedBy] = useState([]);
   // const appState = useRef(AppState.currentState);
 
   // const [appStateVisible, setAppStateVisible] = useState(appState.current);
@@ -101,6 +107,18 @@ const PrivateChat = ({ navigation, route }) => {
     return unsub;
   }, []);
 
+  useEffect(() => {
+    if (auth.currentUser.uid) {
+      getBlockedByList();
+    }
+  }, []);
+
+  const getBlockedByList = async () => {
+    const userRef = doc(db, "users", auth?.currentUser?.uid);
+    const userSnap = await getDoc(userRef);
+    setBlockedBy(userSnap.data().blockedBy);
+  };
+
   const sendMessage = async () => {
     Keyboard.dismiss();
 
@@ -144,14 +162,40 @@ const PrivateChat = ({ navigation, route }) => {
     <View style={styles.container}>
       {loading && <Spinner visible={loading} color="#ffffff" />}
       <View style={styles.chatHeader}>
-        <Text style={styles.headerText}>
-          You are chatting with {route.params.data.displayName}
-        </Text>
+        {/* <Text style={styles.headerText}>
+        </Text> */}
+        <ListItem.Subtitle
+          style={styles.headerText}
+          ellipsizeMode="tail"
+          numberOfLines={1}
+        >
+          Chatting with {route.params.data.displayName}
+        </ListItem.Subtitle>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={() => setBlockModalOpened(!blockModalOpened)}
+          >
+            <Ionicons name="close-circle-outline" size={21} color="#001e2b" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setReportModalOpened(!reportModalOpened)}
+          >
+            <Ionicons name="flag-outline" size={21} color="#001e2b" />
+          </TouchableOpacity>
+        </View>
       </View>
-      {modalOpened && (
+
+      {reportModalOpened && (
         <ReportModal
           user={route.params.data}
-          changeModalState={setModalOpened}
+          changeModalState={setReportModalOpened}
+        />
+      )}
+      {blockModalOpened && (
+        <BlockModal
+          user={route.params.data}
+          changeModalState={setBlockModalOpened}
+          navigation={navigation}
         />
       )}
 
@@ -238,41 +282,67 @@ const PrivateChat = ({ navigation, route }) => {
               )
             }
           />
-          <View style={styles.inputContainer}>
-            <View style={styles.input}>
-              <Ionicons name="chatbubbles-outline" size={20} color="#001e2b" />
+          {blockedBy.includes(route.params.data.email) ? (
+            <Text style={styles.blockMsg}>
+              This user blocked you! You are not able to send messages to them.
+            </Text>
+          ) : (
+            <View style={styles.inputContainer}>
+              <View style={styles.input}>
+                <Ionicons
+                  name="chatbubbles-outline"
+                  size={20}
+                  color="#001e2b"
+                />
 
-              <TextInput
-                style={styles.textInput}
-                placeholder="Send a message..."
-                value={input}
-                onChangeText={(text) => setInput(text)}
-                onSubmitEditing={sendMessage}
-                // onBlur={() => console.log("not")}
-                // onFocus={() => console.log("focus")}
-              />
-              <View style={styles.inputActions}>
-                <TouchableOpacity>
-                  <Ionicons name="happy-outline" size={20} color="#001e2b" />
-                </TouchableOpacity>
-                <TouchableOpacity>
-                  <Ionicons name="image-outline" size={20} color="#001e2b" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setModalOpened(!modalOpened)}>
-                  <Ionicons name="flag-outline" size={20} color="#001e2b" />
-                </TouchableOpacity>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Send a message..."
+                  value={input}
+                  onChangeText={(text) => setInput(text)}
+                  onSubmitEditing={sendMessage}
+                  // onBlur={() => console.log("not")}
+                  // onFocus={() => console.log("focus")}
+                />
+                <View style={styles.inputActions}>
+                  <TouchableOpacity onPress={() => setShowEmojis(!showEmojis)}>
+                    <Ionicons name="happy-outline" size={20} color="#001e2b" />
+                  </TouchableOpacity>
+                  <TouchableOpacity>
+                    <Ionicons name="image-outline" size={20} color="#001e2b" />
+                  </TouchableOpacity>
+                </View>
               </View>
+              <TouchableOpacity
+                activeOpacity={0.5}
+                onPress={sendMessage}
+                style={styles.sendBtn}
+              >
+                <Ionicons name="send" size={25} color="#001e2b" />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              activeOpacity={0.5}
-              onPress={sendMessage}
-              style={styles.sendBtn}
-            >
-              <Ionicons name="send" size={25} color="#001e2b" />
-            </TouchableOpacity>
-          </View>
+          )}
         </>
       </TouchableWithoutFeedback>
+      {showEmojis && (
+        <View
+          style={{
+            padding: 30,
+            width: "100%",
+            height: "60%",
+            backgroundColor: "#ececec",
+            borderRadius: 20,
+          }}
+        >
+          <EmojiSelector
+            onEmojiSelected={(emoji) => setInput((prev) => prev + emoji)}
+            category={Categories.emotion}
+            showTabs={false}
+            showSectionTitles={false}
+            showSearchBar={false}
+          />
+        </View>
+      )}
     </View>
   );
 };
@@ -286,13 +356,21 @@ const styles = StyleSheet.create({
     zIndex: 50,
   },
   chatHeader: {
-    justifyContent: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     backgroundColor: "#ffffff",
     height: "10%",
-    padding: 15,
+    padding: 10,
   },
   headerText: {
     color: "#001e2b",
+    width: "70%",
+  },
+  headerActions: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    width: "20%",
   },
   recieverContainer: {
     alignSelf: "flex-end",
@@ -355,6 +433,11 @@ const styles = StyleSheet.create({
   timestamp: {
     fontSize: 8,
   },
+  blockMsg: {
+    color: "#ffffff",
+    textAlign: "center",
+    marginBottom: 50,
+  },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -380,7 +463,7 @@ const styles = StyleSheet.create({
   textInput: {
     color: "#001e2b",
     marginLeft: 5,
-    width: "60%",
+    width: "65%",
     height: 35,
     fontSize: 12,
   },
