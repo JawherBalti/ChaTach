@@ -79,7 +79,9 @@ const Home = ({ navigation }) => {
         data: doc.data(),
       }));
       setIsLoading(false);
-      setUsers(allUsers);
+      setUsers(
+        allUsers.filter((user) => user.data.email !== auth?.currentUser?.email)
+      );
     });
   };
 
@@ -97,13 +99,11 @@ const Home = ({ navigation }) => {
   };
 
   const filteredUsers = useMemo(() => {
-    return users
-      .filter((user) => user.data.email !== auth?.currentUser?.email)
-      .filter((user) => {
-        return user.data.displayName
-          .toLowerCase()
-          .includes(searchedUser.toLowerCase());
-      });
+    return users.filter((user) => {
+      return user.data.displayName
+        .toLowerCase()
+        .includes(searchedUser.toLowerCase());
+    });
   }, [users, searchedUser]);
 
   const filteredRooms = useMemo(() => {

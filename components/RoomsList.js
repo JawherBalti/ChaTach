@@ -1,8 +1,8 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 import React, { useEffect, useState } from "react";
 import { ListItem, Avatar } from "react-native-elements";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
-import { auth, db } from "../firebase";
+import { db } from "../firebase";
 
 const RoomsList = ({ id, data, enterChat }) => {
   const [chatMessages, setChatMessages] = useState([]);
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   },
   lastMsgContainer: {
     flexDirection: "row",
-    width: "20%",
+    width: "25%",
   },
   lastMsgPreview: {
     width: 25,

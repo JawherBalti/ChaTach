@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   },
   lastMsgContainer: {
     flexDirection: "row",
-    width: "35%",
+    width: "25%",
   },
   lastMsgPreview: {
     width: 25,

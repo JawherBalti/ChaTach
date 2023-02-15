@@ -90,7 +90,10 @@ const Login = ({ navigation }) => {
           online: true,
         });
       })
-      .catch((err) => alert(err));
+      .catch((err) => {
+        setLoading(false);
+        alert(err);
+      });
   };
 
   const uploadImage = async (image) => {

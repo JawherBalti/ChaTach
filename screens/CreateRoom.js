@@ -28,7 +28,7 @@ const CreateRoom = ({ navigation }) => {
     });
   }, [navigation]);
 
-  const createChat = async () => {
+  const createRoom = async () => {
     setLoading(false);
     if (input) {
       setLoading(true);
@@ -42,7 +42,11 @@ const CreateRoom = ({ navigation }) => {
       } catch (err) {
         alert(err);
       }
-    } else alert("Room name cannot be empty!");
+    } else {
+      setLoading(false);
+
+      alert("Room name cannot be empty!");
+    }
   };
 
   return (
@@ -58,11 +62,11 @@ const CreateRoom = ({ navigation }) => {
           placeholder="Enter a room name"
           value={input}
           onChangeText={(text) => setInput(text)}
-          onSubmitEditing={createChat}
+          onSubmitEditing={createRoom}
         />
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={createChat}>
+      <TouchableOpacity style={styles.button} onPress={createRoom}>
         <Ionicons name="md-add-circle" size={20} color="#001e2b" />
 
         <Text style={styles.btnText}>Create a new Room</Text>
