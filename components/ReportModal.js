@@ -16,8 +16,8 @@ const ReportModal = ({ user, changeModalState }) => {
     const report = {
       reporter: auth.currentUser.displayName,
       reporterAvatar: auth.currentUser.photoURL,
-      reporeted: user.displayName,
-      reporetedId: user.id,
+      reported: user.displayName,
+      reportedEmail: user.email,
       reportReason: selectedValue,
       timestamp: serverTimestamp(),
     };

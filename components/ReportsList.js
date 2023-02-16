@@ -2,10 +2,15 @@ import { View, Text, StyleSheet } from "react-native";
 import React from "react";
 import { Avatar, ListItem } from "react-native-elements";
 
-const ReportsList = ({ id, data }) => {
+const ReportsList = ({ id, data, navigation }) => {
   return (
     <ListItem
-      // onPress={() => enterChat(id, data.chatName)}
+      onPress={() =>
+        navigation.navigate("Report", {
+          id: id,
+          data: data,
+        })
+      }
       key={id}
       containerStyle={styles.reportsList}
       bottomDivider
@@ -14,25 +19,29 @@ const ReportsList = ({ id, data }) => {
         rounded
         source={{
           uri:
-            data.reporterAvatar ||
+            data?.reporterAvatar ||
             "https://www.pngmart.com/files/22/User-Avatar-Profile-PNG-Isolated-Transparent-HD-Photo.png",
         }}
       />
       <ListItem.Content>
         <ListItem.Title style={styles.reporterName}>
-          {data.reporter}
+          {data?.reporter}
         </ListItem.Title>
         <ListItem.Subtitle
           style={styles.reportReason}
           ellipsizeMode="tail"
           numberOfLines={1}
         >
-          reported {data.reporeted} for {data.reportReason}
+          reported {data?.reported} for {data?.reportReason}
         </ListItem.Subtitle>
       </ListItem.Content>
-      <Text style={styles.timestamp}>
-        {new Date(data.timestamp.seconds * 1000).toISOString().substring(0, 10)}
-      </Text>
+      {data?.timestamp && (
+        <Text style={styles.timestamp}>
+          {new Date(data?.timestamp?.seconds * 1000)
+            .toISOString()
+            .substring(0, 10)}
+        </Text>
+      )}
     </ListItem>
   );
 };

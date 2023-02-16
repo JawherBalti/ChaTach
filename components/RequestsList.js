@@ -2,10 +2,15 @@ import { View, Text, StyleSheet } from "react-native";
 import React from "react";
 import { Avatar, ListItem } from "react-native-elements";
 
-const RequestsList = ({ id, data }) => {
+const RequestsList = ({ id, data, navigation }) => {
   return (
     <ListItem
-      // onPress={() => enterChat(id, data.chatName)}
+      onPress={() =>
+        navigation.navigate("UnbanRequest", {
+          id: id,
+          data: data,
+        })
+      }
       key={id}
       containerStyle={styles.requestsList}
       bottomDivider
@@ -30,9 +35,13 @@ const RequestsList = ({ id, data }) => {
           {data.request}
         </ListItem.Subtitle>
       </ListItem.Content>
-      <Text style={styles.timestamp}>
-        {new Date(data.timestamp.seconds * 1000).toISOString().substring(0, 10)}
-      </Text>
+      {data?.timestamp && (
+        <Text style={styles.timestamp}>
+          {new Date(data?.timestamp?.seconds * 1000)
+            .toISOString()
+            .substring(0, 10)}
+        </Text>
+      )}
     </ListItem>
   );
 };
