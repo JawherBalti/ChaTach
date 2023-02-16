@@ -14,13 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Divider } from "react-native-elements";
 import ReportsList from "../components/ReportsList";
 import RequestsList from "../components/RequestsList";
-import {
-  collection,
-  getDocs,
-  onSnapshot,
-  orderBy,
-  query,
-} from "firebase/firestore";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { useEffect } from "react";
 import { useIsFocused } from "@react-navigation/native";
@@ -74,7 +68,6 @@ const Moderation = ({ navigation }) => {
           id: doc.id,
           data: doc.data(),
         }));
-        console.log(allRequests);
         setIsLoading(false);
         setUnbanRequests(allRequests);
       }
@@ -116,34 +109,6 @@ const Moderation = ({ navigation }) => {
       </View>
       <Divider />
 
-      {/* <View style={styles.search}>
-            {isRooms ? (
-              <View style={styles.input}>
-                <Ionicons name="md-search" size={20} color="#001e2b" />
-
-                <TextInput
-                  style={styles.textInput}
-                  value={searchedRoom}
-                  onChangeText={(text) => setSearchedRoom(text)}
-                  placeholder="Find a Room..."
-                  placeholderTextColor="grey"
-                />
-              </View>
-            ) : (
-              <View style={styles.input}>
-                <Ionicons name="md-search" size={20} color="#001e2b" />
-
-                <TextInput
-                  value={searchedUser}
-                  onChangeText={(text) => setSearchedUser(text)}
-                  placeholder="Find a User..."
-                  placeholderTextColor="grey"
-                  style={styles.textInput}
-                />
-              </View>
-            )}
-          </View> */}
-
       {isReports ? (
         <FlatList
           style={styles.listBg}
@@ -153,7 +118,7 @@ const Moderation = ({ navigation }) => {
             <ReportsList
               id={data.item.id}
               data={data.item.data}
-              // enterChat={enterChat}
+              navigation={navigation}
             />
           )}
         />
@@ -166,7 +131,7 @@ const Moderation = ({ navigation }) => {
             <RequestsList
               id={data.item.id}
               data={data.item.data}
-              // enterPrivateChat={enterPrivateChat}
+              navigation={navigation}
             />
           )}
         />
