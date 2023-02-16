@@ -120,7 +120,7 @@ const Register = ({ navigation }) => {
         });
         registerIndieID(email, 5714, "SjNbNi7iZK3N2k3C1jM21X");
       })
-      .catch((err) => alert(err.message));
+      .catch((err) => alert("Could not register! Please try again."));
   };
 
   return (

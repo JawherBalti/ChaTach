@@ -16,7 +16,6 @@ import {
   getDoc,
   getDocs,
   onSnapshot,
-  orderBy,
   query,
 } from "firebase/firestore";
 import { useIsFocused } from "@react-navigation/native";
@@ -39,7 +38,6 @@ const Home = ({ navigation }) => {
   const isFocused = useIsFocused();
 
   const chatsData = [];
-  const usersData = [];
 
   useEffect(() => {
     if (isFocused && auth.currentUser) {

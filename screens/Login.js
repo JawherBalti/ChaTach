@@ -92,7 +92,7 @@ const Login = ({ navigation }) => {
       })
       .catch((err) => {
         setLoading(false);
-        alert(err);
+        alert("Could not login! Please try again.");
       });
   };
 
@@ -143,7 +143,7 @@ const Login = ({ navigation }) => {
                   online: true,
                 })
               )
-              .catch((err) => alert(err.message));
+              .catch((err) => alert("Could not login! Please try again."));
           } else {
             const url = await uploadImage(data.picture.data.url);
 
@@ -169,7 +169,7 @@ const Login = ({ navigation }) => {
                   photoURL: url,
                 });
               })
-              .catch((err) => alert(err.message));
+              .catch((err) => alert("Could not login! Please try again."));
           }
         });
       }
@@ -207,7 +207,7 @@ const Login = ({ navigation }) => {
                   online: true,
                 })
               )
-              .catch((err) => alert(err.message));
+              .catch((err) => alert("Could not login! Please try again."));
           } else {
             const url = await uploadImage(data.picture);
 
@@ -233,7 +233,7 @@ const Login = ({ navigation }) => {
                   photoURL: url,
                 });
               })
-              .catch((err) => alert(err.message));
+              .catch((err) => alert("Could not login! Please try again."));
           }
         });
       }
