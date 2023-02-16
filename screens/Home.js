@@ -10,14 +10,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { Divider } from "react-native-elements";
 import { Ionicons } from "@expo/vector-icons";
 import { auth, db } from "../firebase";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  onSnapshot,
-  query,
-} from "firebase/firestore";
+import { collection, doc, getDoc, onSnapshot, query } from "firebase/firestore";
 import { useIsFocused } from "@react-navigation/native";
 import UsersList from "../components/UsersList";
 import RoomsList from "../components/RoomsList";
@@ -27,7 +20,7 @@ import Spinner from "react-native-loading-spinner-overlay";
 import Banned from "../components/Banned";
 
 const Home = ({ navigation }) => {
-  const [chats, setChats] = useState([]);
+  const [rooms, setRooms] = useState([]);
   const [users, setUsers] = useState([]);
   const [isBanned, setIsBanned] = useState(false);
   const [isRooms, setIsRooms] = useState(true);
@@ -36,19 +29,6 @@ const Home = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const isFocused = useIsFocused();
-
-  const chatsData = [];
-
-  useEffect(() => {
-    if (isFocused && auth.currentUser) {
-      getRooms();
-      getUserBanned();
-    }
-  }, [isFocused]);
-
-  useEffect(() => {
-    if (!auth.currentUser) navigation.navigate("Login");
-  }, []);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -60,6 +40,17 @@ const Home = ({ navigation }) => {
       headerLeft: () => <HeaderLeft navigation={navigation} />,
     });
   }, [navigation]);
+
+  useEffect(() => {
+    if (isFocused && auth.currentUser) {
+      getRooms();
+      getUserBanned();
+    }
+  }, [isFocused]);
+
+  useEffect(() => {
+    if (!auth.currentUser) navigation.navigate("Login");
+  }, []);
 
   const getUserBanned = async () => {
     if (auth.currentUser) {
@@ -85,15 +76,16 @@ const Home = ({ navigation }) => {
 
   const getRooms = async () => {
     setIsLoading(true);
-    const unsubscribe = await getDocs(collection(db, "publicMessages"));
-    unsubscribe.forEach((doc) => {
-      chatsData.push({
+    onSnapshot(query(collection(db, "publicMessages")), (snapshot) => {
+      const allRooms = snapshot.docs.map((doc) => ({
         id: doc.id,
         data: doc.data(),
-      });
+      }));
+      setIsLoading(false);
+      setRooms(
+        allRooms.filter((user) => user.data.email !== auth?.currentUser?.email)
+      );
     });
-    setIsLoading(false);
-    setChats(chatsData);
   };
 
   const filteredUsers = useMemo(() => {
@@ -105,12 +97,12 @@ const Home = ({ navigation }) => {
   }, [users, searchedUser]);
 
   const filteredRooms = useMemo(() => {
-    return chats.filter((chat) => {
-      return chat.data.chatName
+    return rooms.filter((room) => {
+      return room.data.chatName
         .toLowerCase()
         .includes(searchedRoom.toLowerCase());
     });
-  }, [chats, searchedRoom]);
+  }, [rooms, searchedRoom]);
 
   const enterPrivateChat = (id, data) => {
     navigation.navigate("PrivateChat", {
