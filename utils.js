@@ -191,28 +191,30 @@ export const uploadImage = async (image, route) => {
 export const getRooms = async (setRooms, setIsLoading) => {
   setIsLoading(false);
   onSnapshot(query(collection(db, "publicMessages")), (snapshot) => {
-    const allRooms = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      data: doc.data(),
-    }));
+    const allRooms = snapshot.docs
+      .map((doc) => ({
+        id: doc.id,
+        data: doc.data(),
+      }))
+      .filter((user) => user.data.email !== auth?.currentUser?.email);
     setIsLoading(false);
-    setRooms(
-      allRooms.filter((user) => user.data.email !== auth?.currentUser?.email)
-    );
+    setRooms(allRooms);
   });
 };
 
 export const getUsers = (setUsers, setIsLoading) => {
   setIsLoading(true);
   onSnapshot(query(collection(db, "users")), (snapshot) => {
-    const allUsers = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      data: doc.data(),
-    }));
+    const allUsers = auth.currentUser
+      ? snapshot.docs
+          .map((doc) => ({
+            id: doc.id,
+            data: doc.data(),
+          }))
+          .filter((user) => user.data.email !== auth?.currentUser?.email)
+      : [];
     setIsLoading(false);
-    setUsers(
-      allUsers.filter((user) => user.data.email !== auth?.currentUser?.email)
-    );
+    setUsers(allUsers);
   });
 };
 
