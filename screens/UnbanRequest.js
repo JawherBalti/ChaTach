@@ -1,12 +1,12 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import React, { useLayoutEffect } from "react";
+import { ListItem } from "react-native-elements";
 import HeaderRight from "../components/HeaderRight";
 import HeaderLeft from "../components/HeaderLeft";
 import { Ionicons } from "@expo/vector-icons";
-import { ListItem } from "react-native-elements";
-import { deleteUnbanRequest, unbanUser } from "../utils";
 import Day from "../components/Day";
 import Sender from "../components/Sender";
+import { deleteUnbanRequest, unbanUser } from "../utils";
 
 const UnbanRequest = ({ navigation, route }) => {
   useLayoutEffect(() => {

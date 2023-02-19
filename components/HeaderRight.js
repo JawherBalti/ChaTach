@@ -1,5 +1,5 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import React, { useState, useLayoutEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { auth } from "../firebase";
 import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "react-native-elements";
@@ -21,7 +21,7 @@ const HeaderRight = ({ navigation }) => {
 
   const route = useRoute();
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (auth.currentUser) {
       getUserInfo(setIsLoading, setIsAdmin, setIsBanned);
       getReports(setIsLoading, setReports);

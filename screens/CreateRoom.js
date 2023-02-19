@@ -5,16 +5,19 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import React, { useLayoutEffect, useState } from "react";
+import React, { useLayoutEffect, useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import Spinner from "react-native-loading-spinner-overlay";
 import HeaderLeft from "../components/HeaderLeft";
 import HeaderRight from "../components/HeaderRight";
-import Spinner from "react-native-loading-spinner-overlay";
-import { createRoom } from "../utils";
+import { auth } from "../firebase";
+import Banned from "../components/Banned";
+import { createRoom, getUserBanned } from "../utils";
 
 const CreateRoom = ({ navigation }) => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isBanned, setIsBanned] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -27,32 +30,46 @@ const CreateRoom = ({ navigation }) => {
     });
   }, [navigation]);
 
+  useEffect(() => {
+    if (auth.currentUser) {
+      getUserBanned(setIsBanned);
+    }
+  }, []);
+
   return (
-    <View style={styles.container}>
-      {isLoading && <Spinner visible={isLoading} color="#ffffff" />}
-      <Text style={styles.text}>Create a new Room</Text>
-      <View style={styles.input}>
-        <Ionicons name="ios-create" size={20} color="#001e2b" />
+    <>
+      {isBanned ? (
+        <Banned />
+      ) : (
+        <View style={styles.container}>
+          {isLoading && <Spinner visible={isLoading} color="#ffffff" />}
+          <Text style={styles.text}>Create a new Room</Text>
+          <View style={styles.input}>
+            <Ionicons name="ios-create" size={20} color="#001e2b" />
 
-        <TextInput
-          style={styles.textInput}
-          placeholderTextColor="grey"
-          placeholder="Enter a room name"
-          value={input}
-          onChangeText={(text) => setInput(text)}
-          onSubmitEditing={() => createRoom(setIsLoading, input, navigation)}
-        />
-      </View>
+            <TextInput
+              style={styles.textInput}
+              placeholderTextColor="grey"
+              placeholder="Enter a room name"
+              value={input}
+              onChangeText={(text) => setInput(text)}
+              onSubmitEditing={() =>
+                createRoom(setIsLoading, input, navigation)
+              }
+            />
+          </View>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => createRoom(setIsLoading, input, navigation)}
-      >
-        <Ionicons name="md-add-circle" size={20} color="#001e2b" />
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => createRoom(setIsLoading, input, navigation)}
+          >
+            <Ionicons name="md-add-circle" size={20} color="#001e2b" />
 
-        <Text style={styles.btnText}>Create a new Room</Text>
-      </TouchableOpacity>
-    </View>
+            <Text style={styles.btnText}>Create a new Room</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </>
   );
 };
 

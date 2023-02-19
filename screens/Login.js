@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
   Dimensions,
   Image,
   Text,
@@ -19,6 +18,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import HeaderRight from "../components/HeaderRight";
 import HeaderLeft from "../components/HeaderLeft";
+import Input from "../components/Input";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import * as Facebook from "expo-auth-session/providers/facebook";
@@ -28,7 +28,6 @@ import {
   signInWithCredentials,
   createUserWithSocials,
 } from "../utils";
-import Input from "../components/Input";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -204,7 +203,6 @@ const Login = ({ navigation }) => {
         style={[styles.button, styles.googleButton]}
         onPress={SignInWithGoogle}
       >
-        {/* <Ionicons name="logo-google" size={17} color="#001e2b" /> */}
         <Image
           style={{
             width: 20,

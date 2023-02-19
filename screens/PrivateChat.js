@@ -24,6 +24,7 @@ import Emojis from "../components/Emojis";
 import {
   getBlockedByList,
   getPrivateMessages,
+  getUserBanned,
   pickImage,
   sendMessage,
 } from "../utils";
@@ -33,6 +34,7 @@ const PrivateChat = ({ navigation, route }) => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isBanned, setIsBanned] = useState(false);
   const [showEmojis, setShowEmojis] = useState(false);
   const [reportModalOpened, setReportModalOpened] = useState(false);
   const [blockModalOpened, setBlockModalOpened] = useState(false);
@@ -49,95 +51,104 @@ const PrivateChat = ({ navigation, route }) => {
     });
   }, [navigation]);
 
-  useLayoutEffect(() => {
-    setIsLoading(true);
-    getPrivateMessages(setIsLoading, setMessages, route);
-  }, []);
-
   useEffect(() => {
     if (auth.currentUser.uid) {
+      setIsLoading(true);
       getBlockedByList(setBlockedBy);
+      getUserBanned(setIsBanned);
+      getPrivateMessages(setIsLoading, setMessages, route);
     }
   }, []);
 
   return (
-    <View style={styles.container}>
-      {isLoading && <Spinner visible={isLoading} color="#ffffff" />}
-      <View style={styles.chatHeader}>
-        <ListItem.Subtitle
-          style={styles.headerText}
-          ellipsizeMode="tail"
-          numberOfLines={1}
-        >
-          Chatting with {route.params.data.displayName}
-        </ListItem.Subtitle>
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            onPress={() => setBlockModalOpened(!blockModalOpened)}
-          >
-            <Ionicons name="close-circle-outline" size={21} color="#001e2b" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setReportModalOpened(!reportModalOpened)}
-          >
-            <Ionicons name="flag-outline" size={21} color="#001e2b" />
-          </TouchableOpacity>
-        </View>
-      </View>
+    <>
+      {isBanned ? (
+        <Banned />
+      ) : (
+        <View style={styles.container}>
+          {isLoading && <Spinner visible={isLoading} color="#ffffff" />}
+          <View style={styles.chatHeader}>
+            <ListItem.Subtitle
+              style={styles.headerText}
+              ellipsizeMode="tail"
+              numberOfLines={1}
+            >
+              Chatting with {route.params.data.displayName}
+            </ListItem.Subtitle>
+            <View style={styles.headerActions}>
+              <TouchableOpacity
+                onPress={() => setBlockModalOpened(!blockModalOpened)}
+              >
+                <Ionicons
+                  name="close-circle-outline"
+                  size={21}
+                  color="#001e2b"
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setReportModalOpened(!reportModalOpened)}
+              >
+                <Ionicons name="flag-outline" size={21} color="#001e2b" />
+              </TouchableOpacity>
+            </View>
+          </View>
 
-      {reportModalOpened && (
-        <ReportModal
-          user={route.params.data}
-          changeModalState={setReportModalOpened}
-        />
-      )}
-      {blockModalOpened && (
-        <BlockModal
-          user={route.params.data}
-          changeModalState={setBlockModalOpened}
-          navigation={navigation}
-        />
-      )}
-
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <>
-          <FlatList
-            data={messages}
-            keyExtractor={(item) => item.data.timestamp}
-            renderItem={(data) =>
-              data.item.data.senderEmail === auth?.currentUser?.email ? (
-                <>
-                  <Sender senderData={data.item.data} />
-                  {data.item.data.timestamp ? (
-                    <Day date={data.item?.data?.timestamp?.seconds} />
-                  ) : null}
-                </>
-              ) : (
-                <Reciever recieverData={data.item.data} route={route} />
-              )
-            }
-          />
-          {blockedBy.includes(route.params.data.email) ? (
-            <Text style={styles.blockMsg}>
-              This user blocked you! You are not able to send messages to them.
-            </Text>
-          ) : (
-            <SendMessage
-              input={input}
-              setInput={setInput}
-              showEmojis={showEmojis}
-              setShowEmojis={setShowEmojis}
-              setImage={setImage}
-              setImagePreview={setImagePreview}
-              sendMessage={sendMessage}
-              pickImage={pickImage}
-              route={route}
+          {reportModalOpened && (
+            <ReportModal
+              user={route.params.data}
+              changeModalState={setReportModalOpened}
             />
           )}
-        </>
-      </TouchableWithoutFeedback>
-      {showEmojis && <Emojis setInput={setInput} />}
-    </View>
+          {blockModalOpened && (
+            <BlockModal
+              user={route.params.data}
+              changeModalState={setBlockModalOpened}
+              navigation={navigation}
+            />
+          )}
+
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <>
+              <FlatList
+                data={messages}
+                keyExtractor={(item) => item.data.timestamp}
+                renderItem={(data) =>
+                  data.item.data.senderEmail === auth?.currentUser?.email ? (
+                    <>
+                      <Sender senderData={data.item.data} />
+                      {data.item.data.timestamp ? (
+                        <Day date={data.item?.data?.timestamp?.seconds} />
+                      ) : null}
+                    </>
+                  ) : (
+                    <Reciever recieverData={data.item.data} route={route} />
+                  )
+                }
+              />
+              {blockedBy.includes(route.params.data.email) ? (
+                <Text style={styles.blockMsg}>
+                  This user blocked you! You are not able to send messages to
+                  them.
+                </Text>
+              ) : (
+                <SendMessage
+                  input={input}
+                  setInput={setInput}
+                  showEmojis={showEmojis}
+                  setShowEmojis={setShowEmojis}
+                  setImage={setImage}
+                  setImagePreview={setImagePreview}
+                  sendMessage={sendMessage}
+                  pickImage={pickImage}
+                  route={route}
+                />
+              )}
+            </>
+          </TouchableWithoutFeedback>
+          {showEmojis && <Emojis setInput={setInput} />}
+        </View>
+      )}{" "}
+    </>
   );
 };
 

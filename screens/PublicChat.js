@@ -24,12 +24,15 @@ import {
   sendMessage,
   getUserAdmin,
   getPublicMessages,
+  getUserBanned,
 } from "../utils";
+import Banned from "../components/Banned";
 
 const PublicChat = ({ navigation, route }) => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isBanned, setIsBanned] = useState(false);
   const [showEmojis, setShowEmojis] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [deleteModalOpened, setDeleteModalOpened] = useState(false);
@@ -45,79 +48,83 @@ const PublicChat = ({ navigation, route }) => {
     });
   }, [navigation]);
 
-  useLayoutEffect(() => {
-    setIsLoading(true);
-    getPublicMessages(setIsLoading, setMessages, route.params.id);
-  }, []);
-
   useEffect(() => {
     if (auth?.currentUser) {
+      setIsLoading(true);
+      getPublicMessages(setIsLoading, setMessages, route.params.id);
       getUserAdmin(setIsAdmin);
+      getUserBanned(setIsBanned);
     }
   }, []);
 
   return (
-    <View style={styles.container}>
-      {isLoading && <Spinner visible={isLoading} color="#ffffff" />}
-      <View style={styles.chatHeader}>
-        <Text style={styles.headerText}>
-          Welcome to {route.params.chatName}
-        </Text>
-        {isAdmin && (
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-              onPress={() => setDeleteModalOpened(!deleteModalOpened)}
-            >
-              <Ionicons
-                name="remove-circle-outline"
-                size={20}
-                color="#001e2b"
-              />
-            </TouchableOpacity>
+    <>
+      {isBanned ? (
+        <Banned />
+      ) : (
+        <View style={styles.container}>
+          {isLoading && <Spinner visible={isLoading} color="#ffffff" />}
+          <View style={styles.chatHeader}>
+            <Text style={styles.headerText}>
+              Welcome to {route.params.chatName}
+            </Text>
+            {isAdmin && (
+              <View style={styles.headerActions}>
+                <TouchableOpacity
+                  onPress={() => setDeleteModalOpened(!deleteModalOpened)}
+                >
+                  <Ionicons
+                    name="remove-circle-outline"
+                    size={20}
+                    color="#001e2b"
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
-        )}
-      </View>
 
-      {deleteModalOpened && (
-        <DeleteModal
-          room={route.params}
-          changeModalState={setDeleteModalOpened}
-          navigation={navigation}
-        />
+          {deleteModalOpened && (
+            <DeleteModal
+              room={route.params}
+              changeModalState={setDeleteModalOpened}
+              navigation={navigation}
+            />
+          )}
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <>
+              <FlatList
+                data={messages}
+                keyExtractor={(item) => item?.data?.timestamp}
+                renderItem={(data) =>
+                  data.item.data.email === auth.currentUser.email ? (
+                    <>
+                      <Sender senderData={data.item.data} />
+                      {data.item.data.timestamp ? (
+                        <Day date={data.item?.data?.timestamp.seconds} />
+                      ) : null}
+                    </>
+                  ) : (
+                    <Reciever recieverData={data.item.data} route={route} />
+                  )
+                }
+              />
+              <SendMessage
+                input={input}
+                setInput={setInput}
+                showEmojis={showEmojis}
+                setShowEmojis={setShowEmojis}
+                setImage={setImage}
+                setImagePreview={setImagePreview}
+                sendMessage={sendMessage}
+                pickImage={pickImage}
+                route={route}
+              />
+            </>
+          </TouchableWithoutFeedback>
+          {showEmojis && <Emojis setInput={setInput} />}
+        </View>
       )}
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <>
-          <FlatList
-            data={messages}
-            keyExtractor={(item) => item?.data?.timestamp}
-            renderItem={(data) =>
-              data.item.data.email === auth.currentUser.email ? (
-                <>
-                  <Sender senderData={data.item.data} />
-                  {data.item.data.timestamp ? (
-                    <Day date={data.item?.data?.timestamp.seconds} />
-                  ) : null}
-                </>
-              ) : (
-                <Reciever recieverData={data.item.data} route={route} />
-              )
-            }
-          />
-          <SendMessage
-            input={input}
-            setInput={setInput}
-            showEmojis={showEmojis}
-            setShowEmojis={setShowEmojis}
-            setImage={setImage}
-            setImagePreview={setImagePreview}
-            sendMessage={sendMessage}
-            pickImage={pickImage}
-            route={route}
-          />
-        </>
-      </TouchableWithoutFeedback>
-      {showEmojis && <Emojis setInput={setInput} />}
-    </View>
+    </>
   );
 };
 

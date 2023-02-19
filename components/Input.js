@@ -1,7 +1,6 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TextInput } from "react-native";
 import React from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { TextInput } from "react-native";
 
 const Input = ({
   label,

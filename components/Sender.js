@@ -4,7 +4,6 @@ import { Avatar } from "react-native-elements";
 import Timestamp from "./Timestamp";
 
 const Sender = ({ senderData }) => {
-  console.log(senderData);
   return (
     <View key={senderData.timestamp} style={styles.sender}>
       <Avatar

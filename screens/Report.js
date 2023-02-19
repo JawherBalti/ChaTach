@@ -7,15 +7,15 @@ import {
   FlatList,
   TouchableOpacity,
 } from "react-native";
-import React, { useLayoutEffect, useState } from "react";
+import React, { useLayoutEffect, useState, useEffect } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import HeaderLeft from "../components/HeaderLeft";
 import HeaderRight from "../components/HeaderRight";
-import { ListItem } from "react-native-elements";
-import Spinner from "react-native-loading-spinner-overlay";
-import { Ionicons } from "@expo/vector-icons";
-import { deleteReport, getPrivateMessages } from "../utils";
 import Day from "../components/Day";
 import Sender from "../components/Sender";
+import { ListItem } from "react-native-elements";
+import Spinner from "react-native-loading-spinner-overlay";
+import { deleteReport, getPrivateMessages } from "../utils";
 
 const Report = ({ navigation, route }) => {
   const [messages, setMessages] = useState([]);
@@ -32,7 +32,7 @@ const Report = ({ navigation, route }) => {
     });
   }, [navigation]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     setIsLoading(true);
     getPrivateMessages(setIsLoading, setMessages, route);
   }, []);

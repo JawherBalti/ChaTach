@@ -14,13 +14,10 @@ const UsersList = ({ id, data, enterPrivateChat, navigation }) => {
 
   const route = useRoute();
 
-  useLayoutEffect(() => {
-    getPrivateMessages(setIsLoading, setMessages, route, data);
-  }, []);
-
   useEffect(() => {
     if (auth?.currentUser) {
       getUserAdmin(setIsAdmin);
+      getPrivateMessages(setIsLoading, setMessages, route, data);
     }
   }, []);
 
