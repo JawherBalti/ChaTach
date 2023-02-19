@@ -1,24 +1,16 @@
-import { View, Text } from "react-native";
+import {
+  View,
+  Text,
+  Dimensions,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
 import React from "react";
-import { StyleSheet } from "react-native";
-import { Dimensions } from "react-native";
-import { TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { deleteDoc, doc } from "firebase/firestore";
-import { db } from "../firebase";
 import { ListItem } from "react-native-elements";
+import { deleteRoom } from "../utils";
 
 const DeleteModal = ({ room, changeModalState, navigation }) => {
-  const handleRemoveRoom = () => {
-    const roomRef = doc(db, "publicMessages", room.id);
-
-    deleteDoc(roomRef)
-      .then(() => {
-        navigation.navigate("Home");
-      })
-      .catch((err) => alert("Could not delete room!"));
-  };
-
   return (
     <View style={styles.modal}>
       <View style={styles.modalContainer}>
@@ -40,7 +32,10 @@ const DeleteModal = ({ room, changeModalState, navigation }) => {
             <Ionicons name="close-circle" size={15} color="#001e2b" />
             <Text>Cancel</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.submitBtn} onPress={handleRemoveRoom}>
+          <TouchableOpacity
+            style={styles.submitBtn}
+            onPress={() => deleteRoom(room, navigation)}
+          >
             <Ionicons name="remove-circle" size={15} color="#001e2b" />
             <Text>Delete</Text>
           </TouchableOpacity>

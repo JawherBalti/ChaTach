@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from "react-native";
+import { Text, StyleSheet } from "react-native";
 import React from "react";
 import { Avatar, ListItem } from "react-native-elements";
 
@@ -20,7 +20,7 @@ const RequestsList = ({ id, data, navigation }) => {
         source={{
           uri:
             data.photoUrl ||
-            "https://www.pngmart.com/files/22/User-Avatar-Profile-PNG-Isolated-Transparent-HD-Photo.png",
+            "https://icon-library.com/images/no-user-image-icon/no-user-image-icon-27.jpg",
         }}
       />
       <ListItem.Content>

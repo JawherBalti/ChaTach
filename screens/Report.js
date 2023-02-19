@@ -5,25 +5,17 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   FlatList,
-  Image,
   TouchableOpacity,
 } from "react-native";
-import React, { useLayoutEffect } from "react";
+import React, { useLayoutEffect, useState } from "react";
 import HeaderLeft from "../components/HeaderLeft";
 import HeaderRight from "../components/HeaderRight";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  orderBy,
-  query,
-} from "firebase/firestore";
-import { db } from "../firebase";
-import { ListItem, Avatar } from "react-native-elements";
-import { useState } from "react";
+import { ListItem } from "react-native-elements";
 import Spinner from "react-native-loading-spinner-overlay";
 import { Ionicons } from "@expo/vector-icons";
+import { deleteReport, getPrivateMessages } from "../utils";
+import Day from "../components/Day";
+import Sender from "../components/Sender";
 
 const Report = ({ navigation, route }) => {
   const [messages, setMessages] = useState([]);
@@ -42,33 +34,8 @@ const Report = ({ navigation, route }) => {
 
   useLayoutEffect(() => {
     setIsLoading(true);
-    const unsub = onSnapshot(
-      query(collection(db, "privateMessages"), orderBy("timestamp", "desc")),
-      (snapshot) => {
-        const allMessages = snapshot.docs
-          .map((doc) => ({
-            data: doc.data(),
-          }))
-          .filter(
-            (message) =>
-              message.data.senderEmail === route.params.data.reportedEmail
-          );
-
-        setMessages(allMessages);
-        setIsLoading(false);
-      }
-    );
-    return unsub;
+    getPrivateMessages(setIsLoading, setMessages, route);
   }, []);
-
-  const handleDeleteReport = () => {
-    const reportRef = doc(db, "reports", route.params.id);
-    deleteDoc(reportRef)
-      .then(() => {
-        navigation.navigate("Moderation");
-      })
-      .catch((err) => alert("Could not delete report!"));
-  };
 
   return (
     <View style={styles.container}>
@@ -81,7 +48,7 @@ const Report = ({ navigation, route }) => {
         >
           Messages sent by {route.params.data.reported}
         </ListItem.Subtitle>
-        <TouchableOpacity onPress={handleDeleteReport}>
+        <TouchableOpacity onPress={() => deleteReport(navigation, route)}>
           <Ionicons name="remove-circle-outline" size={20} color="#001e2b" />
         </TouchableOpacity>
       </View>
@@ -92,54 +59,10 @@ const Report = ({ navigation, route }) => {
           keyExtractor={(item) => new Date(item?.data?.timestamp * 1000)}
           renderItem={(data) => (
             <>
-              <View
-                key={new Date(data?.item?.data?.timestamp * 1000)}
-                style={styles.sender}
-              >
-                <Avatar
-                  rounded
-                  size={30}
-                  style={styles.avatar}
-                  source={{ uri: data.item.data.photoURL }}
-                />
-                {data.item.data.message.slice(-4) === ".png" ? (
-                  <Image
-                    style={styles.imageMsg}
-                    source={{
-                      uri: data.item.data.message,
-                    }}
-                  />
-                ) : (
-                  <Text style={styles.senderText}>
-                    {data.item.data.message}
-                  </Text>
-                )}
+              <Sender senderData={data.item.data} />
 
-                {data?.item?.data?.timestamp ? (
-                  <Text
-                    style={[
-                      styles.timestamp,
-                      { color: "#ffffff", paddingRight: 5 },
-                    ]}
-                  >
-                    {new Date(data.item?.data?.timestamp?.seconds * 1000)
-                      .getHours()
-                      .toString()
-                      .padStart(2, "0") +
-                      ":" +
-                      new Date(data.item?.data?.timestamp?.seconds * 1000)
-                        .getMinutes()
-                        .toString()
-                        .padStart(2, "0")}
-                  </Text>
-                ) : null}
-              </View>
               {data.item.data.timestamp ? (
-                <Text style={styles.date}>
-                  {new Date(data.item?.data?.timestamp?.seconds * 1000)
-                    .toISOString()
-                    .substring(0, 10)}
-                </Text>
+                <Day date={data.item.data.timestamp.seconds} />
               ) : null}
             </>
           )}
@@ -172,46 +95,6 @@ const styles = StyleSheet.create({
   headerText: {
     color: "#001e2b",
     width: "70%",
-  },
-  sender: {
-    paddingBottom: 5,
-    paddingTop: 10,
-    paddingLeft: 10,
-    paddingRight: 25,
-    backgroundColor: "#164d64",
-    alignSelf: "flex-start",
-    borderRadius: 20,
-    margin: 15,
-    maxWidth: "80%",
-    position: "relative",
-  },
-  imageMsg: {
-    width: 200,
-    height: 150,
-    borderRadius: 15,
-    margin: 5,
-  },
-  senderText: {
-    color: "white",
-    fontWeight: "500",
-    marginBottom: 5,
-  },
-  avatar: {
-    position: "absolute",
-    bottom: -15,
-    right: -5,
-    height: 30,
-    width: 30,
-  },
-  date: {
-    color: "#ffffff",
-    marginLeft: 20,
-    margin: 20,
-    marginTop: 0,
-    fontSize: 10,
-  },
-  timestamp: {
-    fontSize: 8,
   },
   reportReason: {
     color: "#ffffff",

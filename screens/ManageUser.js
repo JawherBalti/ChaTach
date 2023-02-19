@@ -1,12 +1,10 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import React from "react";
-import { useLayoutEffect } from "react";
+import React, { useLayoutEffect } from "react";
 import HeaderRight from "../components/HeaderRight";
 import HeaderLeft from "../components/HeaderLeft";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../firebase";
 import { Avatar } from "react-native-elements";
 import { Ionicons } from "@expo/vector-icons";
+import { banUser, unbanUser, setRegular, setAdmin } from "../utils";
 
 const ManageUser = ({ route, navigation }) => {
   useLayoutEffect(() => {
@@ -20,38 +18,8 @@ const ManageUser = ({ route, navigation }) => {
     });
   }, [navigation]);
 
-  const setAdmin = () => {
-    updateDoc(doc(db, "users", route.params.data.id), {
-      isAdmin: true,
-    });
-    navigation.navigate("Home");
-  };
-
-  const setRegular = () => {
-    updateDoc(doc(db, "users", route.params.data.id), {
-      isAdmin: false,
-    });
-    navigation.navigate("Home");
-  };
-
-  const banUser = () => {
-    updateDoc(doc(db, "users", route.params.data.id), {
-      isBanned: true,
-    });
-    navigation.navigate("Home");
-  };
-
-  const unbanUser = () => {
-    updateDoc(doc(db, "users", route.params.data.id), {
-      isBanned: false,
-      unbanRequestSent: false,
-    });
-    navigation.navigate("Home");
-  };
-
   return (
     <View style={styles.container}>
-      {console.log(route)}
       <Text style={styles.title}>Manage</Text>
       <Text style={styles.subTitle}>User Information:</Text>
       <View style={styles.userInfo}>
@@ -89,7 +57,11 @@ const ManageUser = ({ route, navigation }) => {
                 backgroundColor: "#00ed64",
               },
             ]}
-            onPress={route.params.data.isAdmin ? setRegular : setAdmin}
+            onPress={() =>
+              route.params.data.isAdmin
+                ? setRegular(navigation, route)
+                : setAdmin(navigation, route)
+            }
           >
             <Ionicons name="construct" size={15} color="#001e2b" />
             <Text>{route.params.data.isAdmin ? "Regular" : "Admin"}</Text>
@@ -113,7 +85,11 @@ const ManageUser = ({ route, navigation }) => {
                 backgroundColor: "#00ed64",
               },
             ]}
-            onPress={route.params.data.isBanned ? unbanUser : banUser}
+            onPress={() =>
+              route.params.data.isBanned
+                ? unbanUser(navigation, route)
+                : banUser(navigation, route)
+            }
           >
             <Ionicons
               name={route.params.data.isBanned ? "lock-open" : "lock-closed"}

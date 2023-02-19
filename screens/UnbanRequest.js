@@ -3,9 +3,10 @@ import React, { useLayoutEffect } from "react";
 import HeaderRight from "../components/HeaderRight";
 import HeaderLeft from "../components/HeaderLeft";
 import { Ionicons } from "@expo/vector-icons";
-import { Avatar, ListItem } from "react-native-elements";
-import { deleteDoc, doc, updateDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { ListItem } from "react-native-elements";
+import { deleteUnbanRequest, unbanUser } from "../utils";
+import Day from "../components/Day";
+import Sender from "../components/Sender";
 
 const UnbanRequest = ({ navigation, route }) => {
   useLayoutEffect(() => {
@@ -20,26 +21,8 @@ const UnbanRequest = ({ navigation, route }) => {
   }, [navigation]);
 
   const handUnbanRequest = () => {
-    unbanUser();
-    deleteUnbanRequest();
-  };
-
-  const unbanUser = () => {
-    updateDoc(doc(db, "users", route.params.data.id), {
-      isBanned: false,
-      unbanRequestSent: false,
-    });
-    navigation.navigate("Moderation");
-  };
-
-  const deleteUnbanRequest = () => {
-    const requestRef = doc(db, "requests", route.params.id);
-
-    deleteDoc(requestRef)
-      .then(() => {
-        navigation.navigate("Moderation");
-      })
-      .catch((err) => alert("Could not delete unban request!"));
+    unbanUser(navigation, route);
+    deleteUnbanRequest(navigation, route);
   };
 
   return (
@@ -54,51 +37,14 @@ const UnbanRequest = ({ navigation, route }) => {
         </ListItem.Subtitle>
       </View>
       <View style={styles.unbanRequest}>
-        <View
-          key={new Date(route.params.data.timestamp * 1000)}
-          style={styles.sender}
-        >
-          <Avatar
-            rounded
-            size={30}
-            style={styles.avatar}
-            source={{ uri: route.params.data.photoUrl }}
-          />
-          {route.params.data.timestamp ? (
-            <>
-              <Text style={styles.senderName}>
-                {route.params.data.displayName}
-              </Text>
-              <View>
-                <Text style={styles.senderText}>
-                  {route.params.data.request}
-                </Text>
-              </View>
-              <Text style={styles.timestamp}>
-                {new Date(route.params.data.timestamp?.seconds * 1000)
-                  .getHours()
-                  .toString()
-                  .padStart(2, "0") +
-                  ":" +
-                  new Date(route.params.data.timestamp?.seconds * 1000)
-                    .getMinutes()
-                    .toString()
-                    .padStart(2, "0")}
-              </Text>
-            </>
-          ) : null}
-        </View>
+        <Sender senderData={route.params.data} />
         <TouchableOpacity style={styles.btn} onPress={handUnbanRequest}>
           <Ionicons name="lock-open" size={17} color="#001e2b" />
           <Text style={{ color: "#001e2b" }}>Unban</Text>
         </TouchableOpacity>
       </View>
       {route.params.data.timestamp ? (
-        <Text style={styles.date}>
-          {new Date(route.params.data.timestamp.seconds * 1000)
-            .toISOString()
-            .substring(0, 10)}
-        </Text>
+        <Day date={route.params.data.timestamp.seconds} />
       ) : null}
     </View>
   );
@@ -129,48 +75,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     width: "85%",
-  },
-  sender: {
-    paddingBottom: 5,
-    paddingTop: 10,
-    paddingLeft: 10,
-    paddingRight: 25,
-    backgroundColor: "#164d64",
-    alignSelf: "flex-start",
-    borderRadius: 20,
-    margin: 15,
-    maxWidth: "80%",
-    position: "relative",
-  },
-  senderName: {
-    fontSize: 8,
-    color: "#ffffff",
-  },
-  senderText: {
-    color: "#ffffff",
-    fontWeight: "500",
-    marginBottom: 5,
-    fontSize: 11,
-    padding: 5,
-  },
-  avatar: {
-    position: "absolute",
-    bottom: -15,
-    right: -5,
-    height: 30,
-    width: 30,
-  },
-  date: {
-    color: "#ffffff",
-    marginLeft: 20,
-    margin: 20,
-    marginTop: 0,
-    fontSize: 10,
-  },
-  timestamp: {
-    fontSize: 8,
-    color: "#ffffff",
-    paddingRight: 5,
   },
   btn: {
     flexDirection: "row",

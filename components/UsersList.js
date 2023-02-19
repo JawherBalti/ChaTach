@@ -1,68 +1,32 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useLayoutEffect, useState, useEffect } from "react";
 import { Avatar, ListItem } from "react-native-elements";
-import {
-  collection,
-  doc,
-  getDoc,
-  onSnapshot,
-  orderBy,
-  query,
-  updateDoc,
-} from "firebase/firestore";
-import { auth, db } from "../firebase";
+import { auth } from "../firebase";
 import { Ionicons } from "@expo/vector-icons";
+import { getPrivateMessages, getUserAdmin, manageUser } from "../utils";
+import { useRoute } from "@react-navigation/native";
+import LastMessage from "./LastMessage";
 
-const UsersList = ({ id, data, enterPrivateChat, allUsers, navigation }) => {
-  const [chatMessages, setChatMessages] = useState([]);
+const UsersList = ({ id, data, enterPrivateChat, navigation }) => {
+  const [messages, setMessages] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isBanned, setIsBanned] = useState(data.isBanned);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const route = useRoute();
 
   useLayoutEffect(() => {
-    const unsub = onSnapshot(
-      query(collection(db, "privateMessages"), orderBy("timestamp", "desc")),
-      (snapshot) => {
-        setChatMessages(
-          snapshot.docs
-            .map((doc) => ({
-              id: doc.id,
-              data: doc.data(),
-            }))
-            .filter(
-              (message) =>
-                (message.data.senderEmail === auth?.currentUser?.email &&
-                  message.data.recieverEmail === data.email) ||
-                (message.data.senderEmail === data.email &&
-                  message.data.recieverEmail === auth?.currentUser?.email)
-            )
-        );
-      }
-    );
-    return unsub;
+    getPrivateMessages(setIsLoading, setMessages, route, data);
   }, []);
 
   useEffect(() => {
     if (auth?.currentUser) {
-      getUserAdmin();
+      getUserAdmin(setIsAdmin);
     }
   }, []);
 
-  const getUserAdmin = async () => {
-    const userRef = doc(db, "users", auth?.currentUser?.uid);
-    const userSnap = await getDoc(userRef);
-    setIsAdmin(userSnap.data().isAdmin);
-  };
-
-  const manageUser = () => {
-    navigation.navigate("ManageUser", {
-      id: id,
-      data: data,
-    });
-  };
-
   return (
     <ListItem
-      onPress={() => enterPrivateChat(id, data)}
+      onPress={() => enterPrivateChat(id, data, navigation)}
       key={id}
       containerStyle={styles.usersList}
       bottomDivider
@@ -83,46 +47,11 @@ const UsersList = ({ id, data, enterPrivateChat, allUsers, navigation }) => {
           ]}
         ></View>
       </View>
-      <ListItem.Content>
-        <ListItem.Title style={styles.userName}>
-          {data.displayName}
-        </ListItem.Title>
-        {chatMessages.length > 0 ? (
-          chatMessages?.[0].data.message.slice(-4) === ".png" ? (
-            <View style={styles.lastMsgContainer}>
-              <ListItem.Subtitle
-                style={styles.lastMsg}
-                ellipsizeMode="tail"
-                numberOfLines={1}
-              >
-                {chatMessages?.[0]?.data.displayName} :{" "}
-              </ListItem.Subtitle>
-              <Image
-                source={{
-                  uri: chatMessages?.[0]?.data.message,
-                }}
-                style={styles.lastMsgPreview}
-              />
-            </View>
-          ) : (
-            <ListItem.Subtitle
-              style={styles.lastMsg}
-              ellipsizeMode="tail"
-              numberOfLines={1}
-            >
-              {chatMessages?.[0]?.data.displayName} :{" "}
-              {chatMessages?.[0]?.data.message}
-            </ListItem.Subtitle>
-          )
-        ) : (
-          <ListItem.Subtitle style={styles.lastMsg}>
-            No messages with this user
-          </ListItem.Subtitle>
-        )}
-      </ListItem.Content>
-      {chatMessages.length > 0 &&
-      chatMessages?.[0]?.data.senderEmail !== auth?.currentUser?.email &&
-      !chatMessages?.[0]?.data.isRead ? (
+      <LastMessage messages={messages} data={data} />
+
+      {messages.length > 0 &&
+      messages?.[0]?.data.senderEmail !== auth?.currentUser?.email &&
+      !messages?.[0]?.data.isRead ? (
         <Text style={styles.msgNotification}>New</Text>
       ) : null}
       {isAdmin && (
@@ -133,44 +62,13 @@ const UsersList = ({ id, data, enterPrivateChat, allUsers, navigation }) => {
               backgroundColor: "#00ed64",
             },
           ]}
-          onPress={manageUser}
+          onPress={() => manageUser(id, data, navigation)}
         >
           <Ionicons name="settings" size={17} color="#001e2b" />
 
           <Text style={styles.btnText}>Manage</Text>
         </TouchableOpacity>
       )}
-      {/* {isAdmin ? (
-        !isBanned ? (
-          <TouchableOpacity
-            style={[
-              styles.btn,
-              {
-                backgroundColor: "#00ed64",
-              },
-            ]}
-            onPress={banUser}
-          >
-            <Ionicons name="lock-closed" size={17} color="#001e2b" />
-
-            <Text style={styles.btnText}>Ban</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={[
-              styles.btn,
-              {
-                backgroundColor: "#00ed64",
-              },
-            ]}
-            onPress={unbanUser}
-          >
-            <Ionicons name="lock-open" size={17} color="#001e2b" />
-
-            <Text style={styles.btnText}>Unban</Text>
-          </TouchableOpacity>
-        )
-      ) : null} */}
     </ListItem>
   );
 };
@@ -217,23 +115,5 @@ const styles = StyleSheet.create({
   usersList: {
     backgroundColor: "#001E2B",
     padding: 10,
-  },
-  userName: {
-    fontWeight: "800",
-    color: "#ffffff",
-  },
-  lastMsgContainer: {
-    flexDirection: "row",
-    width: "25%",
-  },
-  lastMsgPreview: {
-    width: 25,
-    height: 15,
-    borderRadius: 5,
-  },
-  lastMsg: {
-    fontSize: 10,
-    color: "#c7c7c7",
-    width: "100%",
   },
 });

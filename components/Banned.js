@@ -2,27 +2,15 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
   Image,
   TouchableOpacity,
   TextInput,
   KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
 } from "react-native";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
-import { auth, db } from "../firebase";
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  serverTimestamp,
-  updateDoc,
-} from "firebase/firestore";
+import { auth } from "../firebase";
+import { getUserRequestSent, sendUnbanRequest } from "../utils";
 
 const Banned = () => {
   const [input, setInput] = useState("");
@@ -30,34 +18,9 @@ const Banned = () => {
 
   useEffect(() => {
     if (auth.currentUser) {
-      getUser();
+      getUserRequestSent(setUnbanRequestSent);
     }
   }, []);
-
-  const getUser = async () => {
-    const userRef = doc(db, "users", auth?.currentUser?.uid);
-    const userSnap = await getDoc(userRef);
-    setUnbanRequestSent(userSnap.data().unbanRequestSent);
-  };
-
-  const sendRequest = () => {
-    if (input !== "") {
-      const unbanRequest = {
-        id: auth?.currentUser?.uid,
-        displayName: auth?.currentUser?.displayName,
-        photoUrl: auth?.currentUser?.photoURL,
-        request: input,
-        timestamp: serverTimestamp(),
-      };
-
-      addDoc(collection(db, "requests"), unbanRequest);
-      updateDoc(doc(db, "users", auth?.currentUser?.uid), {
-        unbanRequestSent: true,
-      });
-      setUnbanRequestSent(true);
-    }
-    setInput("");
-  };
 
   return (
     <KeyboardAvoidingView behavior="position" style={styles.container}>
@@ -93,10 +56,17 @@ const Banned = () => {
                   placeholder="Why you should be unbanned?"
                   value={input}
                   onChangeText={(text) => setInput(text)}
-                  onSubmitEditing={sendRequest}
+                  onSubmitEditing={() =>
+                    sendUnbanRequest(input, setInput, setUnbanRequestSent)
+                  }
                 />
               </View>
-              <TouchableOpacity style={styles.button} onPress={sendRequest}>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() =>
+                  sendUnbanRequest(input, setInput, setUnbanRequestSent)
+                }
+              >
                 <Ionicons name="warning" size={20} color="#001e2b" />
                 <Text style={styles.btnText}>Unban request</Text>
               </TouchableOpacity>

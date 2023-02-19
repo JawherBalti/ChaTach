@@ -3,40 +3,38 @@ import {
   FlatList,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
-  Image,
 } from "react-native";
 import React, { useLayoutEffect, useState, useEffect } from "react";
-import { Avatar } from "react-native-elements";
 import { Ionicons } from "@expo/vector-icons";
-import { db, auth } from "../firebase";
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
-} from "firebase/firestore";
+import { auth } from "../firebase";
 import Spinner from "react-native-loading-spinner-overlay";
-import EmojiSelector, { Categories } from "react-native-emoji-selector";
-import * as ImagePicker from "expo-image-picker";
 import HeaderRight from "../components/HeaderRight";
 import HeaderLeft from "../components/HeaderLeft";
 import DeleteModal from "../components/DeleteModal";
+import Day from "../components/Day";
+import Sender from "../components/Sender";
+import Reciever from "../components/Reciever";
+import SendMessage from "../components/SendMessage";
+import Emojis from "../components/Emojis";
+import {
+  pickImage,
+  sendMessage,
+  getUserAdmin,
+  getPublicMessages,
+} from "../utils";
 
 const PublicChat = ({ navigation, route }) => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [showEmojis, setShowEmojis] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [deleteModalOpened, setDeleteModalOpened] = useState(false);
+  const [image, setImage] = useState("");
+  const [imagePreview, setImagePreview] = useState("");
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -48,135 +46,22 @@ const PublicChat = ({ navigation, route }) => {
   }, [navigation]);
 
   useLayoutEffect(() => {
-    setLoading(true);
-    const unsub = onSnapshot(
-      query(
-        collection(db, "publicMessages", route.params.id, "messages"),
-        orderBy("timestamp", "desc")
-      ),
-      (snapshot) => {
-        const allMessages = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          data: doc.data(),
-        }));
-        setMessages(allMessages);
-        setLoading(false);
-
-        //set last message to read
-        // if (
-        //   allMessages.length > 0 &&
-        //   allMessages?.[0]?.email !== auth?.currentUser?.email &&
-        //   !allMessages?.[0]?.isRead
-        // ) {
-        //   const docRef = doc(
-        //     db,
-        //     "publicMessages",
-        //     route.params.id,
-        //     "messages",
-        //     allMessages[0].id
-        //   );
-        //   updateDoc(docRef, {
-        //     isRead: true,
-        //   });
-        // }
-      }
-    );
-    return unsub;
+    setIsLoading(true);
+    getPublicMessages(setIsLoading, setMessages, route.params.id);
   }, []);
 
   useEffect(() => {
     if (auth?.currentUser) {
-      getUserAdmin();
+      getUserAdmin(setIsAdmin);
     }
   }, []);
 
-  const getUserAdmin = async () => {
-    const userRef = doc(db, "users", auth?.currentUser?.uid);
-    const userSnap = await getDoc(userRef);
-    setIsAdmin(userSnap.data().isAdmin);
-  };
-
-  const sendMessage = async () => {
-    Keyboard.dismiss();
-
-    if (input) {
-      addDoc(
-        collection(doc(db, "publicMessages", route.params.id), "messages"),
-        {
-          timestamp: serverTimestamp(),
-          message: input,
-          displayName: auth.currentUser.displayName,
-          email: auth.currentUser.email,
-          photoURL: auth.currentUser.photoURL,
-        }
-      );
-      setInput("");
-    }
-  };
-
-  const pickImage = async () => {
-    // No permissions request is necessary for launching the image library
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (permissionResult.granted) {
-      let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        aspect: [4, 3],
-        quality: 1,
-        base64: true,
-        allowsEditing: true,
-      });
-
-      if (!result.canceled) {
-        let imageObj = {
-          uri: result.assets[0].uri,
-          type: `test/${result.assets[0].uri.split(".")[1]}`,
-          name: `test.${result.assets[0].uri.split(".")[1]}`,
-        };
-        uploadImage(imageObj);
-      }
-    } else {
-      alert("Access to photos refused!");
-    }
-  };
-
-  const uploadImage = async (image) => {
-    const data = new FormData();
-    data.append("file", image);
-    data.append("upload_preset", "eiqxfhzq");
-    data.append("cloud_name", "dv1lhvgjr");
-    try {
-      let res = await fetch(
-        "https://api.cloudinary.com/v1_1/dv1lhvgjr/image/upload",
-        {
-          method: "post",
-          body: data,
-        }
-      );
-      const urlData = await res.json();
-      const message = {
-        timestamp: serverTimestamp(),
-        message: urlData.url,
-        displayName: auth.currentUser.displayName,
-        email: auth.currentUser.email,
-        photoURL: auth.currentUser.photoURL,
-      };
-      addDoc(
-        collection(doc(db, "publicMessages", route.params.id), "messages"),
-        message
-      );
-      return urlData.url;
-    } catch (error) {
-      alert(error.message);
-    }
-  };
-
   return (
     <View style={styles.container}>
-      {loading && <Spinner visible={loading} color="#ffffff" />}
+      {isLoading && <Spinner visible={isLoading} color="#ffffff" />}
       <View style={styles.chatHeader}>
         <Text style={styles.headerText}>
-          welcome to {route.params.chatName}
+          Welcome to {route.params.chatName}
         </Text>
         {isAdmin && (
           <View style={styles.headerActions}>
@@ -204,183 +89,34 @@ const PublicChat = ({ navigation, route }) => {
         <>
           <FlatList
             data={messages}
-            keyExtractor={(item) => item.data.timestamp}
+            keyExtractor={(item) => item?.data?.timestamp}
             renderItem={(data) =>
               data.item.data.email === auth.currentUser.email ? (
                 <>
-                  <View key={data.item.data.timestamp} style={styles.sender}>
-                    <Avatar
-                      rounded
-                      size={30}
-                      style={styles.avatar}
-                      source={{ uri: data.item.data.photoURL }}
-                    />
-                    {data.item.data.message.slice(-4) === ".png" ? (
-                      <Image
-                        style={styles.imageMsg}
-                        source={{
-                          uri: data.item.data.message,
-                        }}
-                      />
-                    ) : (
-                      <Text style={styles.senderText}>
-                        {data.item.data.message}
-                      </Text>
-                    )}
-                    {data.item.data.timestamp ? (
-                      <Text
-                        style={[
-                          styles.timestamp,
-                          { color: "#ffffff", paddingRight: 5 },
-                        ]}
-                      >
-                        {new Date(data.item?.data?.timestamp?.seconds * 1000)
-                          .getHours()
-                          .toString()
-                          .padStart(2, "0") +
-                          ":" +
-                          new Date(data.item?.data?.timestamp?.seconds * 1000)
-                            .getMinutes()
-                            .toString()
-                            .padStart(2, "0")}
-                      </Text>
-                    ) : null}
-                  </View>
-
-                  {/* {data.item.data.timestamp ? (
-                      data?.index > 0 &&
-                      new Date(
-                        messages[data?.index - 1]?.data?.timestamp?.seconds * 1000
-                      )
-                        .toISOString()
-                        .substring(0, 10) !==
-                        new Date(
-                          messages[data?.index]?.data?.timestamp?.seconds * 1000
-                        )
-                          .toISOString()
-                          .substring(0, 10) ? (
-                        <Text style={styles.date}>
-                          {new Date(data?.item?.data?.timestamp?.seconds * 1000)
-                            .toISOString()
-                            .substring(0, 10)}
-                        </Text>
-                      ) : data?.index === 0 ? <Text style={styles.date}>
-                      {new Date(data.item?.data?.timestamp.seconds * 1000)
-                        .toISOString()
-                        .substring(0, 10)}
-                    </Text> : null
-                    ) : null} */}
-
+                  <Sender senderData={data.item.data} />
                   {data.item.data.timestamp ? (
-                    <Text style={styles.date}>
-                      {new Date(data.item?.data?.timestamp.seconds * 1000)
-                        .toISOString()
-                        .substring(0, 10)}
-                    </Text>
+                    <Day date={data.item?.data?.timestamp.seconds} />
                   ) : null}
                 </>
               ) : (
-                <View key={data.item.data.id} style={styles.recieverContainer}>
-                  <View style={styles.reciever}>
-                    <Text style={styles.recieverName}>
-                      {data.item.data.displayName}
-                    </Text>
-                    <Avatar
-                      rounded
-                      size={30}
-                      style={styles.avatar}
-                      source={{ uri: data.item.data.photoURL }}
-                    />
-                    {data.item.data.message.slice(-4) === ".png" ? (
-                      <Image
-                        style={styles.imageMsg}
-                        source={{
-                          uri: data.item.data.message,
-                        }}
-                      />
-                    ) : (
-                      <Text style={styles.recieverText}>
-                        {data.item.data.message}
-                      </Text>
-                    )}
-                    {data.item.data.timestamp ? (
-                      <Text style={styles.timestamp}>
-                        {new Date(data.item?.data?.timestamp?.seconds * 1000)
-                          .getHours()
-                          .toString()
-                          .padStart(2, "0") +
-                          ":" +
-                          new Date(data.item?.data?.timestamp?.seconds * 1000)
-                            .getMinutes()
-                            .toString()
-                            .padStart(2, "0")}
-                      </Text>
-                    ) : null}
-                  </View>
-                  {data.item.data.timestamp ? (
-                    <Text style={styles.date}>
-                      {new Date(data.item?.data?.timestamp.seconds * 1000)
-                        .toISOString()
-                        .substring(0, 10)}
-                    </Text>
-                  ) : null}
-                </View>
+                <Reciever recieverData={data.item.data} route={route} />
               )
             }
           />
-          <View style={styles.inputContainer}>
-            <View style={styles.input}>
-              <Ionicons name="chatbubbles-outline" size={20} color="#001e2b" />
-
-              <TextInput
-                value={input}
-                onChangeText={(text) => setInput(text)}
-                onSubmitEditing={sendMessage}
-                style={styles.textInput}
-                placeholder="Send a message..."
-              />
-              <View style={styles.inputActions}>
-                <TouchableOpacity onPress={() => setShowEmojis(!showEmojis)}>
-                  <Ionicons name="happy-outline" size={20} color="#001e2b" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={pickImage}>
-                  <Ionicons name="image-outline" size={20} color="#001e2b" />
-                </TouchableOpacity>
-                {/* <TouchableOpacity>
-                  <Ionicons name="flag-outline" size={20} color="#001e2b" />
-                </TouchableOpacity> */}
-              </View>
-            </View>
-
-            <TouchableOpacity
-              activeOpacity={0.5}
-              onPress={sendMessage}
-              style={styles.sendBtn}
-            >
-              <Ionicons name="send" size={25} color="#001e2b" />
-            </TouchableOpacity>
-          </View>
+          <SendMessage
+            input={input}
+            setInput={setInput}
+            showEmojis={showEmojis}
+            setShowEmojis={setShowEmojis}
+            setImage={setImage}
+            setImagePreview={setImagePreview}
+            sendMessage={sendMessage}
+            pickImage={pickImage}
+            route={route}
+          />
         </>
       </TouchableWithoutFeedback>
-      {showEmojis && (
-        <View
-          style={{
-            padding: 30,
-            width: "100%",
-            height: "60%",
-            backgroundColor: "#ececec",
-            borderRadius: 20,
-          }}
-        >
-          <EmojiSelector
-            onEmojiSelected={(emoji) => setInput((prev) => prev + emoji)}
-            category={Categories.emotion}
-            showTabs={false}
-            showSectionTitles={false}
-            showSearchBar={false}
-          />
-        </View>
-      )}
+      {showEmojis && <Emojis setInput={setInput} />}
     </View>
   );
 };
@@ -402,102 +138,5 @@ const styles = StyleSheet.create({
   },
   headerText: {
     color: "#001e2b",
-  },
-  recieverContainer: {
-    alignSelf: "flex-end",
-    alignItems: "flex-end",
-  },
-  reciever: {
-    paddingBottom: 10,
-    paddingRight: 10,
-    paddingLeft: 10,
-    backgroundColor: "#ececec",
-    borderRadius: 20,
-    marginRight: 15,
-    marginBottom: 20,
-    marginTop: 10,
-    maxWidth: "80%",
-    position: "relative",
-  },
-  sender: {
-    padding: 15,
-    backgroundColor: "#164d64",
-    alignSelf: "flex-start",
-    borderRadius: 20,
-    margin: 15,
-    maxWidth: "80%",
-    position: "relative",
-  },
-  imageMsg: {
-    width: 200,
-    height: 150,
-    borderRadius: 15,
-    margin: 5,
-  },
-  senderText: {
-    color: "white",
-    fontWeight: "500",
-  },
-  recieverText: {
-    color: "black",
-    fontWeight: "500",
-  },
-  recieverName: {
-    fontSize: 8,
-    color: "#001e2b",
-    paddingTop: 5,
-    paddingRight: 15,
-  },
-  avatar: {
-    position: "absolute",
-    bottom: -15,
-    right: -5,
-    height: 30,
-    width: 30,
-  },
-  date: {
-    color: "#ffffff",
-    marginLeft: 20,
-    margin: 20,
-    marginTop: 0,
-    fontSize: 10,
-  },
-  timestamp: {
-    fontSize: 8,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "100%",
-    padding: 15,
-  },
-  inputActions: {
-    flexDirection: "row",
-    justifyContent: "space-evenly",
-    width: "30%",
-  },
-  input: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ececec",
-    bottom: 0,
-    height: 40,
-    flex: 1,
-    marginRight: 15,
-    padding: 10,
-    borderRadius: 10,
-  },
-  textInput: {
-    color: "#001e2b",
-    marginLeft: 5,
-    width: "65%",
-    fontSize: 12,
-  },
-  sendBtn: {
-    backgroundColor: "#00ed64",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#fff",
-    padding: 5,
   },
 });

@@ -1,3 +1,4 @@
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -5,23 +6,14 @@ import {
   TextInput,
   Dimensions,
   Image,
+  Text,
 } from "react-native";
-import React, { useEffect, useLayoutEffect, useState } from "react";
-import { Text } from "react-native-elements";
 import { auth, db } from "../firebase";
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  updateProfile,
-} from "firebase/auth";
-import {
   collection,
-  doc,
   getCountFromServer,
   getDocs,
   query,
-  setDoc,
-  updateDoc,
   where,
 } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
@@ -31,13 +23,19 @@ import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import * as Facebook from "expo-auth-session/providers/facebook";
 import Spinner from "react-native-loading-spinner-overlay";
+import {
+  uploadImage,
+  signInWithCredentials,
+  createUserWithSocials,
+} from "../utils";
+import Input from "../components/Input";
 
 WebBrowser.maybeCompleteAuthSession();
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [googleRequest, googleResponse, googlePromptLogin] =
     Google.useAuthRequest(
@@ -64,14 +62,14 @@ const Login = ({ navigation }) => {
   useLayoutEffect(() => {
     navigation.setOptions({
       title: "",
-      headerStyle: { backgroundColor: "#fff" },
+      headerStyle: { backgroundColor: "#ffffff" },
       headerLeft: () => <HeaderLeft navigation={navigation} />,
       headerRight: () => <HeaderRight navigation={navigation} />,
     });
   }, []);
 
+  //listens to any authentication or logout attempt from any page of the app
   useEffect(() => {
-    //onAuthStateChanged listens to any authentication or logout attempt from any page of the app
     const unsubscribe = auth.onAuthStateChanged((authUser) => {
       if (authUser) {
         navigation.replace("Home");
@@ -81,52 +79,22 @@ const Login = ({ navigation }) => {
   }, []);
 
   const login = () => {
-    setLoading(true);
     //no need for the clause because we have a listener in the useEffect
-    signInWithEmailAndPassword(auth, email, password)
-      .then((data) => {
-        setLoading(false);
-        updateDoc(doc(db, "users", data.user.uid), {
-          online: true,
-        });
-      })
-      .catch((err) => {
-        setLoading(false);
-        alert("Could not login! Please try again.");
-      });
+    setIsLoading(true);
+    signInWithCredentials(email, password, setIsLoading);
   };
 
-  const uploadImage = async (image) => {
-    const data = new FormData();
-    data.append("file", image);
-    data.append("upload_preset", "eiqxfhzq");
-    data.append("cloud_name", "dv1lhvgjr");
-    try {
-      let res = await fetch(
-        "https://api.cloudinary.com/v1_1/dv1lhvgjr/image/upload",
-        {
-          method: "post",
-          body: data,
-        }
-      );
-      const urlData = await res.json();
-
-      return urlData.url;
-    } catch (error) {
-      alert(error.message);
-    }
-  };
-
+  //signin with facebook
   const SignInWithFacebook = () => {
     let user = {};
-    setLoading(false);
-
+    setIsLoading(true);
     facebookPromptLogin().then(async (response) => {
       if (response.type === "success") {
         let userInfo = await fetch(
           `https://graph.facebook.com/me?fields=name,email,picture&access_token=${response.authentication.accessToken}`
         );
         userInfo.json().then(async (data) => {
+          //find a user by email
           const usersRef = collection(db, "users");
           const userQuery = query(usersRef, where("email", "==", data.email));
           const querySnapshot = await getDocs(userQuery);
@@ -136,50 +104,26 @@ const Login = ({ navigation }) => {
             }
           });
 
+          //if user exists, signin else create one
           if (Object.keys(user).length !== 0) {
-            signInWithEmailAndPassword(auth, data.email, data.name)
-              .then((data) =>
-                updateDoc(doc(db, "users", data.user.uid), {
-                  online: true,
-                })
-              )
-              .catch((err) => alert("Could not login! Please try again."));
+            signInWithCredentials(data.email, data.name, setIsLoading);
           } else {
             const url = await uploadImage(data.picture.data.url);
 
             const users = collection(db, "users");
             const snapshot = await getCountFromServer(users);
             const usersCount = snapshot.data().count;
-
-            createUserWithEmailAndPassword(auth, data.email, data.name)
-              .then(async (authUser) => {
-                await setDoc(doc(db, "users", authUser.user.uid), {
-                  id: authUser.user.uid,
-                  displayName: data.name,
-                  email: data.email,
-                  photoURL: url,
-                  online: true,
-                  isBanned: false,
-                  blockedBy: [],
-                  unbanRequestSent: false,
-                  isAdmin: usersCount > 0 ? false : true,
-                });
-                updateProfile(authUser.user, {
-                  displayName: data.name,
-                  photoURL: url,
-                });
-              })
-              .catch((err) => alert("Could not login! Please try again."));
+            createUserWithSocials(data, url, usersCount);
           }
         });
       }
-      setLoading(true);
     });
   };
 
+  //signin with google
   const SignInWithGoogle = async () => {
     let user = {};
-    setLoading(false);
+    setIsLoading(true);
     googlePromptLogin().then(async (response) => {
       if (response.type === "success") {
         let userInfo = await fetch(
@@ -191,6 +135,7 @@ const Login = ({ navigation }) => {
           }
         );
         userInfo.json().then(async (data) => {
+          //find a user by email
           const usersRef = collection(db, "users");
           const userQuery = query(usersRef, where("email", "==", data.email));
           const querySnapshot = await getDocs(userQuery);
@@ -200,84 +145,49 @@ const Login = ({ navigation }) => {
             }
           });
 
+          //if user exists, signin else create one
           if (Object.keys(user).length !== 0) {
-            signInWithEmailAndPassword(auth, data.email, data.picture)
-              .then((data) =>
-                updateDoc(doc(db, "users", data.user.uid), {
-                  online: true,
-                })
-              )
-              .catch((err) => alert("Could not login! Please try again."));
+            signInWithCredentials(data.email, data.picture, setIsLoading);
           } else {
             const url = await uploadImage(data.picture);
-
             const users = collection(db, "users");
             const snapshot = await getCountFromServer(users);
             const usersCount = snapshot.data().count;
-
-            createUserWithEmailAndPassword(auth, data.email, data.picture)
-              .then(async (authUser) => {
-                await setDoc(doc(db, "users", authUser.user.uid), {
-                  id: authUser.user.uid,
-                  displayName: data.name,
-                  email: data.email,
-                  photoURL: url,
-                  online: true,
-                  isBanned: false,
-                  blockedBy: [],
-                  unbanRequestSent: false,
-                  isAdmin: usersCount > 0 ? false : true,
-                });
-                updateProfile(authUser.user, {
-                  displayName: data.name,
-                  photoURL: url,
-                });
-              })
-              .catch((err) => alert("Could not login! Please try again."));
+            createUserWithSocials(data, url, usersCount, setIsLoading);
           }
         });
       }
-      setLoading(true);
     });
   };
 
   return (
     <View style={styles.container}>
-      {loading && <Spinner visible={loading} color="#ffffff" />}
+      {isLoading && <Spinner visible={isLoading} color="#ffffff" />}
       <Text style={styles.title}>Login</Text>
 
       <View style={styles.inputContainer}>
-        <View>
-          <Text style={styles.label}>Email Address</Text>
-          <View style={styles.input}>
-            <Ionicons name="mail" size={20} color="#001e2b" />
+        <Input
+          label="Email Address"
+          icon="mail"
+          size={20}
+          value={email}
+          setValue={setEmail}
+          placeholder="Enter your email"
+          isSecure={false}
+          type="email"
+        />
 
-            <TextInput
-              value={email}
-              onChangeText={(text) => setEmail(text)}
-              placeholder="Enter your email"
-              type="email"
-              placeholderTextColor="grey"
-              style={styles.textInput}
-            />
-          </View>
-        </View>
-        <View>
-          <Text style={styles.label}>Password</Text>
-          <View style={styles.input}>
-            <Ionicons name="key" size={20} color="#001e2b" />
-            <TextInput
-              value={password}
-              onChangeText={(text) => setPassword(text)}
-              placeholder="Enter your password"
-              secureTextEntry
-              type="password"
-              placeholderTextColor="grey"
-              onSubmitEditing={login}
-              style={styles.textInput}
-            />
-          </View>
-        </View>
+        <Input
+          label="Password"
+          icon="key"
+          size={20}
+          value={password}
+          setValue={setPassword}
+          placeholder="Enter your password"
+          isSecure={true}
+          type="password"
+          onSubmit={login}
+        />
       </View>
       <TouchableOpacity style={styles.button} onPress={login}>
         <Ionicons name="log-in" size={20} color="#001e2b" />
@@ -347,22 +257,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 25,
   },
-  input: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ffffff",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 10,
-  },
-  textInput: {
-    color: "#001e2b",
-    marginLeft: 5,
-    width: "90%",
-    fontSize: 12,
-  },
   label: {
     color: "#ffffff",
+    fontSize: 12,
   },
   button: {
     flexDirection: "row",

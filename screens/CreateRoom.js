@@ -6,16 +6,15 @@ import {
   View,
 } from "react-native";
 import React, { useLayoutEffect, useState } from "react";
-import { db } from "../firebase";
-import { collection, addDoc } from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import HeaderLeft from "../components/HeaderLeft";
 import HeaderRight from "../components/HeaderRight";
 import Spinner from "react-native-loading-spinner-overlay";
+import { createRoom } from "../utils";
 
 const CreateRoom = ({ navigation }) => {
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -28,30 +27,9 @@ const CreateRoom = ({ navigation }) => {
     });
   }, [navigation]);
 
-  const createRoom = async () => {
-    setLoading(false);
-    if (input) {
-      setLoading(true);
-      try {
-        const doc = await addDoc(collection(db, "publicMessages"), {
-          chatName: input,
-        });
-        if (doc) {
-          navigation.goBack();
-        }
-      } catch (err) {
-        alert(err);
-      }
-    } else {
-      setLoading(false);
-
-      alert("Room name cannot be empty!");
-    }
-  };
-
   return (
     <View style={styles.container}>
-      {loading && <Spinner visible={loading} color="#ffffff" />}
+      {isLoading && <Spinner visible={isLoading} color="#ffffff" />}
       <Text style={styles.text}>Create a new Room</Text>
       <View style={styles.input}>
         <Ionicons name="ios-create" size={20} color="#001e2b" />
@@ -62,11 +40,14 @@ const CreateRoom = ({ navigation }) => {
           placeholder="Enter a room name"
           value={input}
           onChangeText={(text) => setInput(text)}
-          onSubmitEditing={createRoom}
+          onSubmitEditing={() => createRoom(setIsLoading, input, navigation)}
         />
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={createRoom}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => createRoom(setIsLoading, input, navigation)}
+      >
         <Ionicons name="md-add-circle" size={20} color="#001e2b" />
 
         <Text style={styles.btnText}>Create a new Room</Text>

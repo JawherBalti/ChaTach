@@ -5,8 +5,7 @@ import {
   TouchableOpacity,
   FlatList,
 } from "react-native";
-import React, { useState } from "react";
-import { useLayoutEffect } from "react";
+import React, { useState, useLayoutEffect, useEffect } from "react";
 import HeaderRight from "../components/HeaderRight";
 import HeaderLeft from "../components/HeaderLeft";
 import Spinner from "react-native-loading-spinner-overlay";
@@ -14,10 +13,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { Divider } from "react-native-elements";
 import ReportsList from "../components/ReportsList";
 import RequestsList from "../components/RequestsList";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
-import { auth, db } from "../firebase";
-import { useEffect } from "react";
+import { auth } from "../firebase";
 import { useIsFocused } from "@react-navigation/native";
+import { getUnbanRequests, getReports } from "../utils";
 
 const Moderation = ({ navigation }) => {
   const [isReports, setIsReports] = useState(true);
@@ -40,39 +38,9 @@ const Moderation = ({ navigation }) => {
 
   useEffect(() => {
     if (isFocused && auth.currentUser) {
-      getReports();
+      getReports(setIsLoading, setReports);
     }
   }, [isFocused]);
-
-  const getReports = () => {
-    setIsLoading(true);
-    onSnapshot(
-      query(collection(db, "reports"), orderBy("timestamp", "asc")),
-      (snapshot) => {
-        const allReports = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          data: doc.data(),
-        }));
-        setIsLoading(false);
-        setReports(allReports);
-      }
-    );
-  };
-
-  const getUnbanRequests = () => {
-    setIsLoading(true);
-    onSnapshot(
-      query(collection(db, "requests"), orderBy("timestamp", "asc")),
-      (snapshot) => {
-        const allRequests = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          data: doc.data(),
-        }));
-        setIsLoading(false);
-        setUnbanRequests(allRequests);
-      }
-    );
-  };
 
   return (
     <View style={styles.container}>
@@ -100,7 +68,7 @@ const Moderation = ({ navigation }) => {
           ]}
           onPress={() => {
             setIsReports(false);
-            getUnbanRequests();
+            getUnbanRequests(setIsLoading, setUnbanRequests);
           }}
         >
           <Ionicons name="warning" size={20} color="#001e2b" />

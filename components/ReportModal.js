@@ -1,29 +1,18 @@
-import { View, Text } from "react-native";
-import React from "react";
-import { StyleSheet } from "react-native";
-import { Dimensions } from "react-native";
-import { TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  Dimensions,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
 import { RadioButton } from "react-native-paper";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { auth, db } from "../firebase";
+import { sendReport } from "../utils";
 
 const ReportModal = ({ user, changeModalState }) => {
   const [selectedValue, setSelectedValue] = useState("Bullying or Harrassment");
 
-  const handleSubmit = () => {
-    const report = {
-      reporter: auth.currentUser.displayName,
-      reporterAvatar: auth.currentUser.photoURL,
-      reported: user.displayName,
-      reportedEmail: user.email,
-      reportReason: selectedValue,
-      timestamp: serverTimestamp(),
-    };
-    addDoc(collection(db, "reports"), report);
-    changeModalState(false);
-  };
   return (
     <View style={styles.modal}>
       <View style={styles.modalContainer}>
@@ -100,7 +89,10 @@ const ReportModal = ({ user, changeModalState }) => {
             <Ionicons name="close-circle" size={18} color="#001e2b" />
             <Text>Cancel</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
+          <TouchableOpacity
+            style={styles.submitBtn}
+            onPress={() => sendReport(user, selectedValue, changeModalState)}
+          >
             <Ionicons name="send" size={15} color="#001e2b" />
             <Text>Submit</Text>
           </TouchableOpacity>

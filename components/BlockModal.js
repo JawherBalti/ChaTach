@@ -1,14 +1,15 @@
-import { View, Text } from "react-native";
-import React from "react";
-import { StyleSheet } from "react-native";
-import { Dimensions } from "react-native";
-import { TouchableOpacity } from "react-native";
-import { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+} from "react-native";
+import React, { useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { arrayRemove, arrayUnion, doc, updateDoc } from "firebase/firestore";
-import { auth, db } from "../firebase";
+import { auth } from "../firebase";
 import { ListItem } from "react-native-elements";
-import { useEffect } from "react";
+import { block, unblock } from "../utils";
 
 const BlockModal = ({ user, changeModalState, navigation }) => {
   const [blockedBy, setBlockedBy] = useState([]);
@@ -16,22 +17,6 @@ const BlockModal = ({ user, changeModalState, navigation }) => {
   useEffect(() => {
     setBlockedBy(user.blockedBy);
   }, []);
-
-  const handleBlock = () => {
-    updateDoc(doc(db, "users", user.id), {
-      blockedBy: arrayUnion(auth.currentUser.email),
-    });
-    changeModalState(false);
-    navigation.navigate("Home");
-  };
-
-  const handleUnblock = () => {
-    updateDoc(doc(db, "users", user.id), {
-      blockedBy: arrayRemove(auth.currentUser.email),
-    });
-    changeModalState(false);
-    navigation.navigate("Home");
-  };
 
   return (
     <View style={styles.modal}>
@@ -73,12 +58,18 @@ const BlockModal = ({ user, changeModalState, navigation }) => {
             <Text>Cancel</Text>
           </TouchableOpacity>
           {user.blockedBy.includes(auth.currentUser.email) ? (
-            <TouchableOpacity style={styles.submitBtn} onPress={handleUnblock}>
+            <TouchableOpacity
+              style={styles.submitBtn}
+              onPress={() => unblock(user, navigation, changeModalState)}
+            >
               <Ionicons name="remove-circle" size={15} color="#001e2b" />
               <Text>Unblock</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={styles.submitBtn} onPress={handleBlock}>
+            <TouchableOpacity
+              style={styles.submitBtn}
+              onPress={() => block(user, navigation, changeModalState)}
+            >
               <Ionicons name="remove-circle" size={15} color="#001e2b" />
               <Text>Block</Text>
             </TouchableOpacity>

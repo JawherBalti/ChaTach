@@ -2,95 +2,39 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
-  Dimensions,
   Image,
   KeyboardAvoidingView,
+  Text,
 } from "react-native";
 import React, { useLayoutEffect, useState } from "react";
-import { Text } from "react-native-elements";
-import { auth, db } from "../firebase";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import * as ImagePicker from "expo-image-picker";
-import {
-  collection,
-  doc,
-  getCountFromServer,
-  setDoc,
-} from "firebase/firestore";
+import { useRoute } from "@react-navigation/native";
+import { db } from "../firebase";
+import { collection, getCountFromServer } from "firebase/firestore";
+import Input from "../components/Input";
 import { Ionicons } from "@expo/vector-icons";
 import HeaderLeft from "../components/HeaderLeft";
 import HeaderRight from "../components/HeaderRight";
 import Spinner from "react-native-loading-spinner-overlay";
-import { registerIndieID } from "native-notify";
+import { createUserWithCredentials, uploadImage, pickImage } from "../utils";
 
 const Register = ({ navigation }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [image, setImage] = useState(
-    "https://d2cbg94ubxgsnp.cloudfront.net/Pictures/2000xAny/9/9/2/512992_shutterstock_715962319converted_749269.png"
-  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [image, setImage] = useState();
   const [imagePreview, setImagePreview] = useState(null);
+
+  const route = useRoute();
 
   useLayoutEffect(() => {
     navigation.setOptions({
       title: "",
-      headerStyle: { backgroundColor: "#fff" },
+      headerStyle: { backgroundColor: "#ffffff" },
       headerLeft: () => <HeaderLeft navigation={navigation} />,
       headerRight: () => <HeaderRight navigation={navigation} />,
     });
   }, []);
-
-  const pickImage = async () => {
-    // No permissions request is necessary for launching the image library
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (permissionResult.granted) {
-      let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        aspect: [4, 3],
-        quality: 1,
-        base64: true,
-        allowsEditing: true,
-      });
-
-      if (!result.canceled) {
-        let imageObj = {
-          uri: result.assets[0].uri,
-          type: `test/${result.assets[0].uri.split(".")[1]}`,
-          name: `test.${result.assets[0].uri.split(".")[1]}`,
-        };
-        setImage(imageObj);
-
-        setImagePreview(result.assets[0].uri);
-      }
-    } else {
-      alert("Access to photos refused!");
-    }
-  };
-
-  const uploadImage = async (image) => {
-    const data = new FormData();
-    data.append("file", image);
-    data.append("upload_preset", "eiqxfhzq");
-    data.append("cloud_name", "dv1lhvgjr");
-    try {
-      let res = await fetch(
-        "https://api.cloudinary.com/v1_1/dv1lhvgjr/image/upload",
-        {
-          method: "post",
-          body: data,
-        }
-      );
-      const urlData = await res.json();
-
-      return urlData.url;
-    } catch (error) {
-      alert(error.message);
-    }
-  };
 
   const register = async () => {
     const url = await uploadImage(image);
@@ -99,98 +43,79 @@ const Register = ({ navigation }) => {
     const snapshot = await getCountFromServer(users);
     const usersCount = snapshot.data().count;
 
-    setLoading(true);
-    createUserWithEmailAndPassword(auth, email, password)
-      .then(async (authUser) => {
-        setLoading(false);
-        await setDoc(doc(db, "users", authUser.user.uid), {
-          id: authUser.user.uid,
-          displayName: name,
-          email: email,
-          photoURL: url,
-          online: true,
-          isBanned: false,
-          blockedBy: [],
-          unbanRequestSent: false,
-          isAdmin: usersCount > 0 ? false : true,
-        });
-        updateProfile(authUser.user, {
-          displayName: name,
-          photoURL: url,
-        });
-        registerIndieID(email, 5714, "SjNbNi7iZK3N2k3C1jM21X");
-      })
-      .catch((err) => alert("Could not register! Please try again."));
+    setIsLoading(true);
+    createUserWithCredentials(
+      name,
+      email,
+      password,
+      url,
+      usersCount,
+      setIsLoading
+    );
   };
 
   return (
     <KeyboardAvoidingView behavior="position" style={styles.container}>
-      {loading && <Spinner visible={loading} color="#ffffff" />}
+      {isLoading && <Spinner visible={isLoading} color="#ffffff" />}
       <View style={{ alignItems: "center" }}>
         <Text style={styles.title}>Register</Text>
         <View style={styles.avatar}>
-          <Image
-            source={{
-              uri:
-                imagePreview ||
-                "https://d2cbg94ubxgsnp.cloudfront.net/Pictures/2000xAny/9/9/2/512992_shutterstock_715962319converted_749269.png",
-            }}
-            style={styles.preview}
-          />
+          {imagePreview ? (
+            <Image
+              source={{
+                uri: imagePreview,
+              }}
+              style={styles.preview}
+            />
+          ) : (
+            <Image
+              source={require("../assets/defaultAvatar.png")}
+              style={styles.preview}
+            />
+          )}
 
-          <TouchableOpacity style={styles.selectAvatar} onPress={pickImage}>
+          <TouchableOpacity
+            style={styles.selectAvatar}
+            onPress={() => pickImage(setImage, setImagePreview, route)}
+          >
             <Text style={styles.plus}>+</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       <View style={styles.inputContainer}>
-        <View>
-          <Text style={styles.label}>Full Name</Text>
-          <View style={styles.input}>
-            <Ionicons name="ios-person" size={20} color="#001e2b" />
+        <Input
+          label="Full Name"
+          icon="ios-person"
+          size={20}
+          value={name}
+          setValue={setName}
+          placeholder="Enter your name"
+          isSecure={false}
+        />
 
-            <TextInput
-              value={name}
-              onChangeText={(text) => setName(text)}
-              placeholder="Enter your name"
-              placeholderTextColor="grey"
-              style={styles.textInput}
-            />
-          </View>
-        </View>
+        <Input
+          label="Email Address"
+          icon="mail"
+          size={20}
+          value={email}
+          setValue={setEmail}
+          placeholder="Enter your email"
+          isSecure={false}
+          type="email"
+        />
 
-        <View>
-          <Text style={styles.label}>Email Address</Text>
-          <View style={styles.input}>
-            <Ionicons name="mail" size={20} color="#001e2b" />
-
-            <TextInput
-              value={email}
-              onChangeText={(text) => setEmail(text)}
-              placeholder="Enter email"
-              type="email"
-              placeholderTextColor="grey"
-              style={styles.textInput}
-            />
-          </View>
-        </View>
-        <View>
-          <Text style={styles.label}>Password</Text>
-          <View style={styles.input}>
-            <Ionicons name="key" size={20} color="#001e2b" />
-            <TextInput
-              value={password}
-              onChangeText={(text) => setPassword(text)}
-              placeholder="Password"
-              secureTextEntry
-              type="password"
-              placeholderTextColor="grey"
-              onSubmitEditing={register}
-              style={styles.textInput}
-            />
-          </View>
-        </View>
+        <Input
+          label="Password"
+          icon="key"
+          size={20}
+          value={password}
+          setValue={setPassword}
+          placeholder="Enter your password"
+          isSecure={true}
+          type="password"
+          onSubmit={register}
+        />
       </View>
       <View style={{ alignItems: "center" }}>
         <TouchableOpacity style={styles.button} onPress={register}>
@@ -249,21 +174,6 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     width: "80%",
-  },
-  input: {
-    flexDirection: "row",
-    alignItems: "center",
-    color: "#001E2B",
-    backgroundColor: "#fff",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 10,
-  },
-  textInput: {
-    color: "#001e2b",
-    marginLeft: 5,
-    width: "90%",
-    fontSize: 12,
   },
   button: {
     flexDirection: "row",

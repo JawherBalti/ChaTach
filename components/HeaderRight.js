@@ -1,24 +1,19 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useState, useLayoutEffect } from "react";
-import { auth, db } from "../firebase";
+import { auth } from "../firebase";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  collection,
-  doc,
-  getDoc,
-  onSnapshot,
-  orderBy,
-  query,
-  updateDoc,
-} from "firebase/firestore";
-import { signOut } from "firebase/auth";
 import { Avatar } from "react-native-elements";
 import { useRoute } from "@react-navigation/native";
 import Spinner from "react-native-loading-spinner-overlay";
-import { useEffect } from "react";
+import {
+  getReports,
+  getUnbanRequests,
+  getUserInfo,
+  signOutUser,
+} from "../utils";
 
 const HeaderRight = ({ navigation }) => {
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isBanned, setIsBanned] = useState(false);
   const [reports, setReports] = useState([]);
@@ -28,59 +23,15 @@ const HeaderRight = ({ navigation }) => {
 
   useLayoutEffect(() => {
     if (auth.currentUser) {
-      getUserInfo();
-      getReports();
-      getUnbanRequests();
+      getUserInfo(setIsLoading, setIsAdmin, setIsBanned);
+      getReports(setIsLoading, setReports);
+      getUnbanRequests(setIsLoading, setUnbanRequests);
     }
   }, []);
 
-  const getUserInfo = async () => {
-    const userRef = doc(db, "users", auth?.currentUser?.uid);
-    const userSnap = await getDoc(userRef);
-    setIsAdmin(userSnap.data().isAdmin);
-    setIsBanned(userSnap.data().isBanned);
-  };
-
-  const getReports = () => {
-    onSnapshot(
-      query(collection(db, "reports"), orderBy("timestamp", "asc")),
-      (snapshot) => {
-        const allReports = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          data: doc.data(),
-        }));
-        setReports(allReports);
-      }
-    );
-  };
-
-  const getUnbanRequests = () => {
-    onSnapshot(
-      query(collection(db, "requests"), orderBy("timestamp", "asc")),
-      (snapshot) => {
-        const allRequests = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          data: doc.data(),
-        }));
-        setUnbanRequests(allRequests);
-      }
-    );
-  };
-
-  const signOutUser = () => {
-    setLoading(true);
-    updateDoc(doc(db, "users", auth?.currentUser?.uid), {
-      online: false,
-    });
-    signOut(auth).then(() => {
-      setLoading(false);
-      navigation.replace("Login");
-    });
-  };
-
   return (
     <View style={styles.headerRight}>
-      {loading && <Spinner visible={loading} color="#ffffff" />}
+      {isLoading && <Spinner visible={isLoading} color="#ffffff" />}
       {auth?.currentUser ? (
         <View
           style={{
@@ -116,7 +67,7 @@ const HeaderRight = ({ navigation }) => {
           <TouchableOpacity
             style={styles.avatar}
             activeOpacity={0.5}
-            onPress={signOutUser}
+            onPress={() => signOutUser(navigation, setIsLoading)}
           >
             <Avatar rounded source={{ uri: auth?.currentUser?.photoURL }} />
           </TouchableOpacity>

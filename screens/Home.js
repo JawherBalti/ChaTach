@@ -4,20 +4,26 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
-  TextInput,
 } from "react-native";
 import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { Divider } from "react-native-elements";
 import { Ionicons } from "@expo/vector-icons";
-import { auth, db } from "../firebase";
-import { collection, doc, getDoc, onSnapshot, query } from "firebase/firestore";
+import { auth } from "../firebase";
 import { useIsFocused } from "@react-navigation/native";
 import UsersList from "../components/UsersList";
 import RoomsList from "../components/RoomsList";
 import HeaderLeft from "../components/HeaderLeft";
 import HeaderRight from "../components/HeaderRight";
-import Spinner from "react-native-loading-spinner-overlay";
 import Banned from "../components/Banned";
+import SearchInput from "../components/SearchInput";
+import Spinner from "react-native-loading-spinner-overlay";
+import {
+  enterChat,
+  enterPrivateChat,
+  getRooms,
+  getUserBanned,
+  getUsers,
+} from "../utils";
 
 const Home = ({ navigation }) => {
   const [rooms, setRooms] = useState([]);
@@ -42,51 +48,15 @@ const Home = ({ navigation }) => {
   }, [navigation]);
 
   useEffect(() => {
-    if (isFocused && auth.currentUser) {
-      getRooms();
-      getUserBanned();
+    if (isFocused && auth?.currentUser) {
+      getRooms(setRooms, setIsLoading);
+      getUserBanned(setIsBanned);
     }
   }, [isFocused]);
 
   useEffect(() => {
     if (!auth.currentUser) navigation.navigate("Login");
   }, []);
-
-  const getUserBanned = async () => {
-    if (auth.currentUser) {
-      const userRef = doc(db, "users", auth?.currentUser?.uid);
-      const userSnap = await getDoc(userRef);
-      setIsBanned(userSnap.data().isBanned);
-    }
-  };
-
-  const getUsers = () => {
-    setIsLoading(true);
-    onSnapshot(query(collection(db, "users")), (snapshot) => {
-      const allUsers = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        data: doc.data(),
-      }));
-      setIsLoading(false);
-      setUsers(
-        allUsers.filter((user) => user.data.email !== auth?.currentUser?.email)
-      );
-    });
-  };
-
-  const getRooms = async () => {
-    setIsLoading(true);
-    onSnapshot(query(collection(db, "publicMessages")), (snapshot) => {
-      const allRooms = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        data: doc.data(),
-      }));
-      setIsLoading(false);
-      setRooms(
-        allRooms.filter((user) => user.data.email !== auth?.currentUser?.email)
-      );
-    });
-  };
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
@@ -103,20 +73,6 @@ const Home = ({ navigation }) => {
         .includes(searchedRoom.toLowerCase());
     });
   }, [rooms, searchedRoom]);
-
-  const enterPrivateChat = (id, data) => {
-    navigation.navigate("PrivateChat", {
-      id: id,
-      data: data,
-    });
-  };
-
-  const enterChat = (id, chatName) => {
-    navigation.navigate("PublicChat", {
-      id: id,
-      chatName: chatName,
-    });
-  };
 
   return (
     <>
@@ -149,7 +105,7 @@ const Home = ({ navigation }) => {
               ]}
               onPress={() => {
                 setIsRooms(false);
-                getUsers();
+                getUsers(setUsers, setIsLoading);
               }}
             >
               <Ionicons name="people" size={20} color="#001e2b" />
@@ -160,29 +116,17 @@ const Home = ({ navigation }) => {
 
           <View style={styles.search}>
             {isRooms ? (
-              <View style={styles.input}>
-                <Ionicons name="md-search" size={20} color="#001e2b" />
-
-                <TextInput
-                  style={styles.textInput}
-                  value={searchedRoom}
-                  onChangeText={(text) => setSearchedRoom(text)}
-                  placeholder="Find a Room..."
-                  placeholderTextColor="grey"
-                />
-              </View>
+              <SearchInput
+                searchedValue={searchedRoom}
+                setSearchedValue={setSearchedRoom}
+                placeholder="Find a room..."
+              />
             ) : (
-              <View style={styles.input}>
-                <Ionicons name="md-search" size={20} color="#001e2b" />
-
-                <TextInput
-                  value={searchedUser}
-                  onChangeText={(text) => setSearchedUser(text)}
-                  placeholder="Find a User..."
-                  placeholderTextColor="grey"
-                  style={styles.textInput}
-                />
-              </View>
+              <SearchInput
+                searchedValue={searchedUser}
+                setSearchedValue={setSearchedUser}
+                placeholder="Find a user..."
+              />
             )}
           </View>
 
@@ -195,6 +139,7 @@ const Home = ({ navigation }) => {
                 <RoomsList
                   id={data.item.id}
                   data={data.item.data}
+                  navigation={navigation}
                   enterChat={enterChat}
                 />
               )}
@@ -208,8 +153,8 @@ const Home = ({ navigation }) => {
                 <UsersList
                   id={data.item.id}
                   data={data.item.data}
-                  enterPrivateChat={enterPrivateChat}
                   navigation={navigation}
+                  enterPrivateChat={enterPrivateChat}
                 />
               )}
             />
@@ -238,19 +183,6 @@ const styles = StyleSheet.create({
   },
   listBg: {
     backgroundColor: "#001e2b",
-  },
-  input: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ffffff",
-    borderRadius: 5,
-    padding: 10,
-  },
-  textInput: {
-    color: "#001E2B",
-    marginLeft: 10,
-    width: "90%",
-    fontSize: 15,
   },
   btn: {
     flexDirection: "row",
