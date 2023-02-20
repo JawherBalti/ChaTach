@@ -28,6 +28,7 @@ import {
   pickImage,
   sendMessage,
 } from "../utils";
+import Banned from "../components/Banned";
 // npx expo install expo-device expo-notifications
 
 const PrivateChat = ({ navigation, route }) => {
@@ -75,6 +76,7 @@ const PrivateChat = ({ navigation, route }) => {
             >
               Chatting with {route.params.data.displayName}
             </ListItem.Subtitle>
+
             <View style={styles.headerActions}>
               <TouchableOpacity
                 onPress={() => setBlockModalOpened(!blockModalOpened)}
@@ -147,7 +149,7 @@ const PrivateChat = ({ navigation, route }) => {
           </TouchableWithoutFeedback>
           {showEmojis && <Emojis setInput={setInput} />}
         </View>
-      )}{" "}
+      )}
     </>
   );
 };

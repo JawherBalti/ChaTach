@@ -112,7 +112,7 @@ const Login = ({ navigation }) => {
             const users = collection(db, "users");
             const snapshot = await getCountFromServer(users);
             const usersCount = snapshot.data().count;
-            createUserWithSocials(data, url, usersCount);
+            createUserWithSocials(data, url, usersCount, setIsLoading);
           }
         });
       }

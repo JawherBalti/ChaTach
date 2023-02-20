@@ -101,7 +101,7 @@ export const createUserWithSocials = (
     })
     .catch((err) => {
       setIsLoading(false);
-      alert("Could not register! Please try again.");
+      alert("Could not register! Please try again12332.");
     });
 };
 
