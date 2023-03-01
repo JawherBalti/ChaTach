@@ -12,4 +12,4 @@ This project was bootstrapped with [Create Expo App], developped unsing react na
 
 ## Android version download link
 
-### Download apk file [here](https://drive.google.com/file/d/1ah3FzUGyfrHWolJh-kAH113_kXby8Bo7/view?usp=share_link)
+### Download apk file [here](https://drive.google.com/file/d/1exoppfmYphWfC5baygrd84CVbnuIgl2z/view?usp=share_link)
