@@ -1,6 +1,7 @@
 # ChaTach mobile application
 
 This project was bootstrapped with [Create Expo App], developped unsing react native with firebase as a database.
+ChaTach is a mobile application allowing users to send text, images and emotes in real-time to groups and individuals. Users can login using their own email and password, facebook or google account.
 
 ## Install dependencies
 
